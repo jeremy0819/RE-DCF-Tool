@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS / 編輯器
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 暫存與輸出
+*.log
+*.tmp
+~$*
+*_前期評估報告.md
+*_逐層表.csv

@@ -37,6 +37,7 @@ def calc_容積查核(參數: dict, 樓層records: list) -> dict:
     §162（全部逐層）：
       梯廳超出 = Σ 各層 max(0, 梯廳 − 樓板 × 梯廳免計%)
       陽台超出 = Σ 各層 max(0, 陽台 − 樓板 × 陽台免計%)
+      陽台1/8投影 = Σ 各層 max(0, 陽台 − 樓板 × 1/8)  ＿ 另一法則
       安全梯   = 允建容積 × 15%（總量，踩坑6）
     只計入「啟用」的樓層（取消勾選 = 排除，如 B1F 防空避難室 §117，踩坑5）。
     """
@@ -57,6 +58,7 @@ def calc_容積查核(參數: dict, 樓層records: list) -> dict:
 
     梯廳超出 = sum(max(0.0, 安全取(f, "梯廳") - 安全取(f, "樓板") * 梯廳基準) for f in 啟用層)
     陽台超出 = sum(max(0.0, 安全取(f, "陽台") - 安全取(f, "樓板") * 陽台基準) for f in 啟用層)
+    陽台1_8超出 = sum(max(0.0, 安全取(f, "陽台") - 安全取(f, "樓板") * 0.125) for f in 啟用層)  # 1/8 = 0.125
     安全梯總量 = sum(安全取(f, "安全梯") for f in 啟用層)
     陽台總量 = sum(安全取(f, "陽台") for f in 啟用層)
     陽台免計面積 = 陽台總量 - 陽台超出
@@ -74,7 +76,7 @@ def calc_容積查核(參數: dict, 樓層records: list) -> dict:
 
     return {
         "基準容積FA": 基準容積FA, "允建容積": 允建容積,
-        "梯廳超出": 梯廳超出, "陽台超出": 陽台超出,
+        "梯廳超出": 梯廳超出, "陽台超出": 陽台超出, "陽台1_8超出": 陽台1_8超出,
         "安全梯上限": 安全梯上限, "安全梯總量": 安全梯總量,
         "陽台總量": 陽台總量, "陽台免計面積": 陽台免計面積,
         "計入容積_圖說": 計入容積_圖說, "計入容積_修正後": 計入容積_修正後,
@@ -180,6 +182,7 @@ def 產生報告(案件名稱, 參數, 容, 坪, 評) -> str:
 - 計入容積（圖說）：{容['計入容積_圖說']:.2f} m²
 - 梯廳超出（逐層 {參數['梯廳免計基準']}%）：{容['梯廳超出']:.2f} m²
 - 陽台超出（逐層 {參數['陽台免計基準']}%）：{容['陽台超出']:.2f} m²
+- 陽台超出（1/8 投影法）：{容['陽台1_8超出']:.2f} m²
 - 安全梯：{容['安全梯總量']:.2f} / 上限 {容['安全梯上限']:.2f} m²
 - 計入容積（修正後）：{容['計入容積_修正後']:.2f} m²
 - **容積餘量：{容['容積餘量']:.2f} m²**
@@ -214,6 +217,13 @@ def main():
     st.markdown("## 🏗️ RE-DCF-Tool — 都更/危老前期評估工具　<span style='font-size:14px;color:#888'>v3 逐層表格版</span>",
                 unsafe_allow_html=True)
 
+    # 部署連結 & 說明
+    部署url = "https://re-dcf-tool-ovmbnrh45ew2khaklhhn3t.streamlit.app"
+    col1, col2 = st.columns([3, 1])
+    with col2:
+        st.markdown(f"<span style='font-size:12px;color:#666'>📱 [分享連結]({部署url})</span>",
+                    unsafe_allow_html=True)
+
     if "floors_df" not in st.session_state:
         st.session_state.floors_df = 範本樓層表("中正段（防災都更）")
     if "params" not in st.session_state:
@@ -221,6 +231,31 @@ def main():
 
     # ---------------- Sidebar：案件參數 + 成本 ----------------
     with st.sidebar:
+        st.header("ℹ️ 工具資訊")
+        st.markdown(f"""
+**RE-DCF-Tool v3**
+永盛開發建設內部工具
+
+📍 **部署位置**：
+🔗 [點此分享給同事]({部署url})
+
+**本機執行**：
+```
+streamlit run app.py
+```
+
+**黃金測試**：
+```
+python test_golden.py
+```
+
+📚 **相關資源**：
+- [GitHub Repo](https://github.com/jeremy0819/RE-DCF-Tool)
+- 【踩坑5】B1F 防空避難室排除 §117
+- 【踩坑6】安全梯總量 ≤ 允建×15%
+- 【踩坑2】梯廳/陽台超出逐層補計
+        """)
+        st.divider()
         st.header("📥 案件參數")
         範本選擇 = st.selectbox("範本", list(範本參數.keys()))
         if st.button("📂 載入此範本（含逐層表）", use_container_width=True):
@@ -339,7 +374,7 @@ def main():
                    f"　計入容積(圖說)來源：**{來源}** = {容['計入容積_圖說']:.0f} m²")
 
     with t2:
-        st.markdown(f"**逐層查核（梯廳基準 {P['梯廳免計基準']}%、陽台基準 {P['陽台免計基準']}%）**")
+        st.markdown(f"**逐層查核（梯廳基準 {P['梯廳免計基準']}%、陽台基準 {P['陽台免計基準']}% 或 1/8 投影）**")
         梯比 = P["梯廳免計基準"] / 100
         陽比 = P["陽台免計基準"] / 100
         審 = []
@@ -349,18 +384,23 @@ def main():
             樓板 = float(f.get("樓板") or 0)
             梯超 = max(0, float(f.get("梯廳") or 0) - 樓板 * 梯比)
             陽超 = max(0, float(f.get("陽台") or 0) - 樓板 * 陽比)
-            審.append({"樓層": f.get("樓層"), "梯廳超出": round(梯超, 2), "陽台超出": round(陽超, 2),
+            陽1_8超 = max(0, float(f.get("陽台") or 0) - 樓板 * 0.125)
+            審.append({"樓層": f.get("樓層"), "梯廳超出": round(梯超, 2),
+                       "陽台超出(10%)": round(陽超, 2), "陽台超出(1/8)": round(陽1_8超, 2),
                        "狀態": "❌ 超出" if (梯超 + 陽超) > 0.01 else "✅"})
         審df = pd.DataFrame(審)
         st.dataframe(審df, use_container_width=True, hide_index=True)
-        c = st.columns(3)
+        c = st.columns(4)
         c[0].metric("梯廳超出合計", f"{容['梯廳超出']:.2f} m²")
-        c[1].metric("陽台超出合計", f"{容['陽台超出']:.2f} m²")
+        c[1].metric("陽台超出(10%)", f"{容['陽台超出']:.2f} m²")
+        c[2].metric("陽台超出(1/8)", f"{容['陽台1_8超出']:.2f} m²")
         安差 = 容["安全梯總量"] - 容["安全梯上限"]
-        c[2].metric("安全梯", f"{容['安全梯總量']:.1f}/{容['安全梯上限']:.1f}",
+        c[3].metric("安全梯", f"{容['安全梯總量']:.1f}/{容['安全梯上限']:.1f}",
                     f"{安差:+.1f}", delta_color="inverse")
         if 容["梯廳超出"] + 容["陽台超出"] > 0:
             st.warning("⚠️ 超出部分依 §162 必須補計入容積（踩坑2）。逐層法為正解，勿用 FA×% 總量法。")
+        if 容["陽台1_8超出"] > 0:
+            st.info(f"💡 陽台 1/8 投影法超出 {容['陽台1_8超出']:.2f} m²（與 {P['陽台免計基準']}% 法併列審查）")
 
     with t3:
         c = st.columns(3)

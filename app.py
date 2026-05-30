@@ -217,78 +217,53 @@ def main():
     st.markdown("## 🏗️ RE-DCF-Tool — 都更/危老前期評估工具　<span style='font-size:14px;color:#888'>v3 逐層表格版</span>",
                 unsafe_allow_html=True)
 
-    # 部署連結 & 說明
-    部署url = "https://re-dcf-tool-ovmbnrh45ew2khaklhhn3t.streamlit.app"
-    col1, col2 = st.columns([3, 1])
-    with col2:
-        st.markdown(f"<span style='font-size:12px;color:#666'>📱 [分享連結]({部署url})</span>",
-                    unsafe_allow_html=True)
-
     if "floors_df" not in st.session_state:
         st.session_state.floors_df = 範本樓層表("中正段（防災都更）")
     if "params" not in st.session_state:
         st.session_state.params = dict(範本參數["中正段（防災都更）"])
 
-    # ---------------- Sidebar：案件參數 + 成本 ----------------
+    # ---------------- Sidebar：案件參數（折疊分組） ----------------
     with st.sidebar:
-        st.header("ℹ️ 工具資訊")
-        st.markdown(f"""
-**RE-DCF-Tool v3**
-永盛開發建設內部工具
+        st.header("📐 案件設定")
 
-📍 **部署位置**：
-🔗 [點此分享給同事]({部署url})
-
-**本機執行**：
-```
-streamlit run app.py
-```
-
-**黃金測試**：
-```
-python test_golden.py
-```
-
-📚 **相關資源**：
-- [GitHub Repo](https://github.com/jeremy0819/RE-DCF-Tool)
-- 【踩坑5】B1F 防空避難室排除 §117
-- 【踩坑6】安全梯總量 ≤ 允建×15%
-- 【踩坑2】梯廳/陽台超出逐層補計
-        """)
-        st.divider()
-        st.header("📥 案件參數")
+        # 範本選擇（常駐可見）
         範本選擇 = st.selectbox("範本", list(範本參數.keys()))
         if st.button("📂 載入此範本（含逐層表）", use_container_width=True):
             載入樓層表(範本樓層表(範本選擇), dict(範本參數[範本選擇]))
 
         P = st.session_state.params
         P["案件名稱"] = st.text_input("案件名稱", P.get("案件名稱", "新案"))
-        P["基地面積"] = st.number_input("基地面積（使照，非謄本）m²", value=float(P.get("基地面積", 1000.0)),
-                                      step=1.0, help="踩坑3：用謄本面積會高估免計上限、掩蓋超出。")
-        P["人行廣場"] = st.number_input("人行廣場/捐地 m²", value=float(P.get("人行廣場", 0.0)), step=1.0)
-        P["容積率"] = st.number_input("容積率（225%→2.25）", value=float(P.get("容積率", 2.25)), step=0.01, format="%.4f")
-        P["獎勵率"] = st.number_input("獎勵率（防災都更如 0.884）", value=float(P.get("獎勵率", 0.50)), step=0.001, format="%.5f")
-        P["容積移轉"] = st.number_input("容積移轉 m²", value=float(P.get("容積移轉", 0.0)), step=1.0)
-        P["面積表計入容積"] = st.number_input("面積表「計入容積合計」m²（0=由逐層加總）",
-                                          value=float(P.get("面積表計入容積", 0.0)), step=1.0,
-                                          help="圖說為真：直接採建築師面積表彙總值，工具只負責補計超出。")
-        st.markdown("**免計基準（§162，逐層；待建築師確認）**")
-        P["梯廳免計基準"] = st.selectbox("梯廳免計 %", [5, 8], index=[5, 8].index(int(P.get("梯廳免計基準", 8))))
-        P["陽台免計基準"] = st.selectbox("陽台免計 %", [10, 15], index=[10, 15].index(int(P.get("陽台免計基準", 10))))
-        st.markdown("**控制變數**")
-        P["公設比"] = st.number_input("公設比（先鎖定）", value=float(P.get("公設比", 0.33)), step=0.01, format="%.2f")
-        外皮係數 = st.number_input("外皮係數", value=1.01, step=0.01, format="%.2f")
 
-        st.markdown("---")
-        st.markdown("**💰 成本假設（可編輯）**")
-        售價 = st.number_input("售價（萬/坪）", value=80.0, step=1.0)
-        土地成本 = st.number_input("土地成本（萬）", value=50000.0, step=1000.0)
-        營造單價 = st.number_input("營造單價（萬/坪）", value=18.0, step=0.5)
-        管銷費率 = st.number_input("管銷費率", value=0.05, step=0.01, format="%.2f")
-        建融成數 = st.number_input("建融成數", value=0.50, step=0.05, format="%.2f")
-        利率 = st.number_input("利率（年）", value=0.03, step=0.005, format="%.3f")
-        年期 = st.number_input("建融年期", value=2.0, step=0.5)
-        稅費率 = st.number_input("稅費雜支率", value=0.03, step=0.01, format="%.2f")
+        st.divider()
+
+        with st.expander("🏗️ 基地與容積", expanded=True):
+            P["基地面積"] = st.number_input("基地面積（使照，非謄本）m²", value=float(P.get("基地面積", 1000.0)),
+                                          step=1.0, help="踩坑3：用謄本面積會高估免計上限、掩蓋超出。")
+            P["人行廣場"] = st.number_input("人行廣場/捐地 m²", value=float(P.get("人行廣場", 0.0)), step=1.0)
+            P["容積率"] = st.number_input("容積率（225%→2.25）", value=float(P.get("容積率", 2.25)), step=0.01, format="%.4f")
+            P["獎勵率"] = st.number_input("獎勵率（防災都更如 0.884）", value=float(P.get("獎勵率", 0.50)), step=0.001, format="%.5f")
+            P["容積移轉"] = st.number_input("容積移轉 m²", value=float(P.get("容積移轉", 0.0)), step=1.0)
+            P["面積表計入容積"] = st.number_input("面積表「計入容積合計」m²（0=由逐層加總）",
+                                              value=float(P.get("面積表計入容積", 0.0)), step=1.0,
+                                              help="圖說為真：直接採建築師面積表彙總值，工具只負責補計超出。")
+
+        with st.expander("📋 免計基準 & 控制變數"):
+            P["梯廳免計基準"] = st.selectbox("梯廳免計 %（§162，逐層）", [5, 8],
+                                          index=[5, 8].index(int(P.get("梯廳免計基準", 8))))
+            P["陽台免計基準"] = st.selectbox("陽台免計 %（§162，逐層）", [10, 15],
+                                          index=[10, 15].index(int(P.get("陽台免計基準", 10))))
+            P["公設比"] = st.number_input("公設比", value=float(P.get("公設比", 0.33)), step=0.01, format="%.2f")
+            外皮係數 = st.number_input("外皮係數", value=1.01, step=0.01, format="%.2f")
+
+        with st.expander("💰 成本假設"):
+            售價 = st.number_input("售價（萬/坪）", value=80.0, step=1.0)
+            土地成本 = st.number_input("土地成本（萬）", value=50000.0, step=1000.0)
+            營造單價 = st.number_input("營造單價（萬/坪）", value=18.0, step=0.5)
+            管銷費率 = st.number_input("管銷費率", value=0.05, step=0.01, format="%.2f")
+            建融成數 = st.number_input("建融成數", value=0.50, step=0.05, format="%.2f")
+            利率 = st.number_input("利率（年）", value=0.03, step=0.005, format="%.3f")
+            年期 = st.number_input("建融年期", value=2.0, step=0.5)
+            稅費率 = st.number_input("稅費雜支率", value=0.03, step=0.01, format="%.2f")
 
     # ---------------- 逐層表格編輯（即時更新） ----------------
     st.markdown("### 🏢 逐層明細（圖說為真實依據）")

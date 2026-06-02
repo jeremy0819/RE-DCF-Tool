@@ -5,6 +5,12 @@
 執行：python test_golden.py
 """
 import sys, types
+# Windows 繁中主控台預設 cp950，印不出 emoji（✅❌🎉）會讓「其實有通過」的測試
+# 噴 UnicodeEncodeError 假崩潰。先強制 stdout 走 UTF-8，讓直接 python test_golden.py 也能跑。
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
 # pandas 是真要用的（範本樓層表回傳 DataFrame）；只 stub UI 套件。
 for 套件 in ["streamlit", "plotly", "plotly.graph_objects"]:
     if 套件 not in sys.modules:

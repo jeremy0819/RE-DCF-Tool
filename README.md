@@ -61,6 +61,7 @@ python test_golden.py
 | `app.py` | 主程式（Streamlit，L1–L6） |
 | `make_template.py` | 產生 Excel 對照範本 |
 | `都更全案投報_對照範本.xlsx` | 坪效及獲利分析對照範本（開舊表並排修改） |
+| `投報分析檢核.md` | 投報 Excel 分頁架構·連動·查核方法論（與坪效查核分工） |
 | `test_golden.py` | 三案黃金測試 + 都更全案投報回歸 |
 | `requirements.txt` | 套件 |
 | `REVIEW.md` | 審查發現與待建築師確認項 |

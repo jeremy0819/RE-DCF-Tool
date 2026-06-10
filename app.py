@@ -1,20 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-RE-DCF-Tool — 都更/危老前期評估工具（v4 UI 重設計版）
-====================================================
+RE-DCF-Tool — 都更/危老前期評估工具（v4.1 UI 精化 + 參數補強版）
+==============================================================
 永盛開發建設「建築坪效與前期評估」Excel 財務模型的程式化版本。
 執行：streamlit run app.py
 
-v4 更新（UI 整體重設計）：
-  1.【UI】全域 CSS 注入：Metric 卡片底色、Tab 膠囊樣式、更多留白。
-  2.【UI】移除四角色快覽卡，改為精簡 4 欄 KPI（允建容積/容積餘量/銷售坪比/投報率）。
-  3.【UI】上傳工具折疊為 expander（預設收合），主畫面更清爽。
-  4.【UI】6 Tab 合併為 5 Tab（容積帳 + 免計查核合為「容積查核」）。
-  5.【UI】Sidebar 改為雙欄數字輸入，減少捲動高度。
-  6.【UI】標題精簡，案件名稱置於副標題行。
+v4.1 更新（UI 精化 + 方法論蒸餾）：
+  1.【UI】全局 CSS 升級：漸層 Tab、卡片陰影、專業字重、Grid 排版。
+  2.【UI】Header 改紫色漸層橫幅（HTML），案件名稱內嵌。
+  3.【UI】結論橫幅改 HTML styled div（顏色更精確）。
+  4.【UI】KPI 卡改 HTML 自製（可依狀態染色，值/注釋分層排版）。
+  5.【UI】統一 Plotly 佈局函式 _fig_layout()，圖表風格一致。
+  6.【參數】新增 L6 土融土地成本輸入（原本鎖定 0，都更全案投報可覆寫）。
+  7.【功能】Tab ② 坪效新增「公設比反推驗算」（方法論 §6 第一項）。
+  8.【功能】Tab ④ 都更投報新增「費率基數一覽」摺疊表（方法論 §4③）。
 
 核心計算承襲 v3：陽台/梯廳超出皆「逐層」判斷（§162），
-已對齊安和/龜山/中正三案圖說。
+已對齊安和/龜山/中正三案圖說。黃金測試：python test_golden.py
 """
 
 import streamlit as st
@@ -143,6 +145,7 @@ def calc_共同負擔(總銷, 房地總銷, 營造坪數, p: dict) -> dict:
       E 稅　　捐 = 營業稅 + 印花稅
       F 管理費用 = 實施者（全案管理）服務費
     p：成本率/單價字典（預設見「財務率預設」＋各案範本），全部從輸入推導、不寫死結果。
+    費率基數（方法論 §4③）：代銷/稅 → 總銷；設計/工管 → 營造；管維 → 工程A。
     """
     營造成本 = p["營造單價"] * 營造坪數
     設計監造 = 營造成本 * p["設計監造率"]
@@ -156,6 +159,7 @@ def calc_共同負擔(總銷, 房地總銷, 營造坪數, p: dict) -> dict:
     租金補償 = p["戶數"] * p["月租金每戶"] * p["安置月數"]
     C權變費用 = 權變作業 + 拆遷補償 + 租金補償
 
+    # D 貸款利息：土融（全案管理預設土地成本=0）+ 建融（以工程費A為計算基礎）
     土融利息 = p["土地成本"] * p["土融成數"] * p["土融利率"] * p["土融年期"]
     建融利息 = A工程費用 * p["建融成數"] * p["建融利率"] * p["建融年期"] * p["現金流係數"]
     D貸款利息 = 土融利息 + 建融利息
@@ -223,6 +227,7 @@ def calc_投報敏感度(銷售坪數, 營造坪數, p: dict,
 財務率預設 = dict(
     設計監造率=0.05, 工程管理率=0.03, 管維率=0.01,
     權變作業率=0.015, 拆補每戶=90.0, 月租金每戶=2.0, 安置月數=42,
+    # 土地融資：全案管理模式地主自持土地，土融利息通常為 0；合建/買賣案填入實際土地成本
     土地成本=0.0, 土融成數=0.70, 土融利率=0.03, 土融年期=4.0,
     建融成數=0.70, 建融利率=0.0325, 建融年期=3.0, 現金流係數=0.5,
     營業稅率=0.05, 印花稅率=0.001, 管理費率=0.05,
@@ -235,19 +240,19 @@ def calc_投報敏感度(銷售坪數, 營造坪數, p: dict,
                          梯廳免計基準=5, 陽台免計基準=10, 面積表計入容積=0.0,
                          # 都更全案投報（新店行情；估價師事業計畫參數）
                          住宅單價=57.0, 店舖坪數=35.0, 店舖單價=80.0, 車位數=103, 車位單價=240.0,
-                         營造單價=22.0, 戶數=111),
+                         營造單價=22.0, 戶數=111, 土融土地成本=0.0),
     "龜山半嶺段（危老）": dict(案件名稱="龜山半嶺段", 基地面積=971.62, 人行廣場=0.0, 容積率=3.20,
                          獎勵率=0.365, 容積移轉=0.0, 公設比=0.34,
                          梯廳免計基準=8, 陽台免計基準=10, 面積表計入容積=4243.80,
                          # 都更全案投報（桃園龜山行情；前期假設）
                          住宅單價=42.0, 店舖坪數=0.0, 店舖單價=0.0, 車位數=60, 車位單價=180.0,
-                         營造單價=20.0, 戶數=40),
+                         營造單價=20.0, 戶數=40, 土融土地成本=0.0),
     "中正段（防災都更）": dict(案件名稱="中正段", 基地面積=983.00, 人行廣場=0.0, 容積率=2.25,
                          獎勵率=0.88407, 容積移轉=0.0, 公設比=0.33,
                          梯廳免計基準=8, 陽台免計基準=10, 面積表計入容積=4167.00,
                          # 都更全案投報（中正紀念堂第一排，4M 巷取保守；行情查證 2026-06）
                          住宅單價=130.0, 店舖坪數=66.0, 店舖單價=182.0, 車位數=49, 車位單價=250.0,
-                         營造單價=24.0, 戶數=40),
+                         營造單價=24.0, 戶數=40, 土融土地成本=0.0),
 }
 
 
@@ -319,7 +324,7 @@ def 產生報告(案件名稱, 參數, 容, 坪, 評, 營造坪數, 投=None) ->
 
 > 共同負擔科目依《都市更新權利變換實施辦法》費用負擔分類；參數基準＝安和段送審試算。
 """
-    return f"""# {案件名稱} 前期評估報告（RE-DCF-Tool v4）
+    return f"""# {案件名稱} 前期評估報告（RE-DCF-Tool v4.1）
 
 ## 結論：{結論}（容積餘量 {容['容積餘量']:.2f} m²）
 
@@ -362,12 +367,12 @@ def 產生報告(案件名稱, 參數, 容, 坪, 評, 營造坪數, 投=None) ->
 | **開發評效** | **{評['開發評效']:.2f}（{評效等級}）** |
 {都更全案段}
 ---
-*RE-DCF-Tool v4｜圖說為真實依據｜逐層 §162 查核｜都更全案投報＝權利變換六大共負*
+*RE-DCF-Tool v4.1｜圖說為真實依據｜逐層 §162 查核｜都更全案投報＝權利變換六大共負*
 """
 
 
 # ===========================================================================
-# 畫面層
+# 畫面層 — 輔助函式
 # ===========================================================================
 def 載入樓層表(df, 參數=None):
     st.session_state.floors_df = df.reset_index(drop=True)
@@ -377,68 +382,146 @@ def 載入樓層表(df, 參數=None):
     st.rerun()
 
 
+def _kpi(label, value, note="", note_color="#6B7280"):
+    """HTML KPI 卡片（成熟風格）：大數字 + 狀態色注釋，作為 st.metric 的替代。"""
+    note_html = (f'<div style="font-size:12px;color:{note_color};margin-top:5px;'
+                 f'line-height:1.4">{note}</div>') if note else ""
+    return (
+        f'<div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;'
+        f'padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 2px 8px rgba(0,0,0,0.04);'
+        f'height:100%;min-height:90px;">'
+        f'<div style="font-size:10.5px;font-weight:700;color:#9CA3AF;text-transform:uppercase;'
+        f'letter-spacing:0.8px;margin-bottom:8px">{label}</div>'
+        f'<div style="font-size:22px;font-weight:700;color:#111827;line-height:1.15">{value}</div>'
+        f'{note_html}</div>'
+    )
+
+
+def _banner(餘量):
+    """HTML 結論橫幅，依容積餘量顯示對應狀態色。"""
+    if 餘量 < 0:
+        bg, lb, tc, icon = "#FEF2F2", "#DC2626", "#991B1B", "❌"
+        msg = f"容積超出 {abs(餘量):.2f} m²，需調整設計"
+    elif 餘量 <= 2:
+        bg, lb, tc, icon = "#F0FDF4", "#16A34A", "#166534", "✅"
+        msg = f"規劃精準、合規（容積餘量 {餘量:.2f} m²）"
+    elif 餘量 <= 5:
+        bg, lb, tc, icon = "#F0FDF4", "#16A34A", "#166534", "✅"
+        msg = f"合規（容積餘量 {餘量:.2f} m²）"
+    else:
+        bg, lb, tc, icon = "#FFFBEB", "#D97706", "#92400E", "⚠️"
+        msg = f"合規但容積未充分利用（餘量 {餘量:.2f} m²）"
+    return (
+        f'<div style="background:{bg};border:1px solid rgba(0,0,0,0.06);'
+        f'border-left:5px solid {lb};border-radius:10px;'
+        f'padding:13px 20px;display:flex;align-items:center;gap:12px;margin:0.6rem 0;">'
+        f'<span style="font-size:18px;flex-shrink:0">{icon}</span>'
+        f'<span style="font-weight:700;color:{tc};font-size:15px">{msg}</span>'
+        f'</div>'
+    )
+
+
+def _fig_layout(title="", height=380, margin_top=None):
+    """統一 Plotly 佈局：字體/底色/留白/懸停，確保全站圖表風格一致。"""
+    mt = margin_top if margin_top is not None else (50 if title else 20)
+    base = dict(
+        font=dict(family="Arial, sans-serif", size=12, color="#374151"),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="#F8FAFC",
+        height=height,
+        margin=dict(t=mt, b=20, l=10, r=10),
+        hoverlabel=dict(bgcolor="white", bordercolor="#E5E7EB", font_size=12),
+    )
+    if title:
+        base["title"] = dict(
+            text=title,
+            font=dict(size=14, color="#374151", family="Arial, sans-serif"),
+            x=0, xanchor="left",
+        )
+    return base
+
+
+# ===========================================================================
+# 畫面層 — 主程式
+# ===========================================================================
 def main():
     st.set_page_config(page_title="RE-DCF-Tool 前期評估", page_icon="🏗️", layout="wide")
 
-    # ── 全域樣式注入 ──────────────────────────────────────────────────────────
+    # ── 全域 CSS ─────────────────────────────────────────────────────────────
     st.markdown("""
 <style>
-/* 頁面頂部留白收緊 */
-.main .block-container { padding-top: 1rem !important; max-width: 1350px; }
+/* ── 全域 ─────────────────────────────── */
+.main .block-container { padding: 0.75rem 1.5rem 2rem !important; max-width: 1400px; }
+#MainMenu, footer { visibility: hidden; }
 
-/* Metric 卡片：淺藍底色 + 細邊框，增加層次感 */
-[data-testid="metric-container"] {
-    background: #f7f8ff;
-    border: 1px solid #dde2f5;
-    border-radius: 10px;
-    padding: 12px 16px !important;
-}
-[data-testid="metric-container"] label {
-    font-size: 12px !important;
-    color: #666 !important;
-    font-weight: 500 !important;
-}
-[data-testid="stMetricValue"] {
-    font-size: 20px !important;
-    font-weight: 700 !important;
-    color: #1a1a2e !important;
-}
-
-/* Tab 標籤：膠囊底色樣式 */
+/* ── Tab：漸層選中 ───────────────────── */
 .stTabs [data-baseweb="tab-list"] {
-    background: #f0f2fa;
-    border-radius: 10px;
-    padding: 4px;
-    gap: 2px;
+    background: #F3F4F6; border-radius: 12px;
+    padding: 4px; gap: 2px; border: 1px solid #E5E7EB;
 }
 .stTabs [data-baseweb="tab"] {
-    border-radius: 8px;
-    padding: 5px 18px;
-    color: #666;
-    font-size: 13px;
+    border-radius: 8px; padding: 7px 20px;
+    color: #6B7280; font-size: 13px; font-weight: 500;
 }
 .stTabs [aria-selected="true"] {
-    background: #ffffff !important;
-    color: #534AB7 !important;
-    font-weight: 600;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    background: linear-gradient(135deg,#534AB7 0%,#6B62D0 100%) !important;
+    color: #fff !important; font-weight: 600;
+    box-shadow: 0 2px 8px rgba(83,74,183,0.28);
 }
 
-/* 分隔線 */
-hr { border-color: #e8ecf0 !important; margin: 0.75rem 0 !important; }
+/* ── Expander ────────────────────────── */
+[data-testid="stExpander"] {
+    border: 1px solid #E5E7EB !important;
+    border-radius: 10px !important;
+    overflow: hidden; margin-bottom: 4px;
+}
+[data-testid="stExpander"] summary {
+    background: #FAFAFA !important; padding: 10px 14px !important;
+}
+[data-testid="stExpander"] summary p {
+    font-weight: 600 !important; color: #374151 !important; font-size: 13.5px !important;
+}
 
-/* Expander 標題字重 */
-[data-testid="stExpander"] summary p { font-weight: 600; }
+/* ── Divider ─────────────────────────── */
+hr { border: none !important; border-top: 1px solid #E5E7EB !important; margin: 1rem 0 !important; }
 
-/* Sidebar 頂部留白 */
-section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
+/* ── Metric 備援樣式 ─────────────────── */
+[data-testid="metric-container"] {
+    background: #fff; border: 1px solid #E5E7EB; border-radius: 12px;
+    padding: 16px 18px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05),0 2px 8px rgba(0,0,0,0.04);
+}
+[data-testid="metric-container"] label {
+    font-size: 10.5px !important; font-weight: 700 !important;
+    color: #9CA3AF !important; text-transform: uppercase; letter-spacing: 0.7px;
+}
+[data-testid="stMetricValue"] { font-size: 22px !important; font-weight: 700 !important; color: #111827 !important; }
+[data-testid="stMetricDelta"] { font-size: 12px !important; }
 
-/* 表格表頭底色 */
+/* ── DataFrame 表頭 ──────────────────── */
 [data-testid="stDataFrameResizable"] th {
-    background: #f0f2fa !important;
-    color: #444 !important;
-    font-weight: 600 !important;
+    background: #F3F4F6 !important; color: #374151 !important;
+    font-weight: 600 !important; border-bottom: 2px solid #E5E7EB !important;
+    font-size: 12px !important;
 }
+[data-testid="stDataFrameResizable"] td { font-size: 13px !important; color: #374151 !important; }
+
+/* ── Button ──────────────────────────── */
+.stButton > button {
+    border-radius: 8px !important; font-weight: 500 !important;
+    border: 1px solid #D1D5DB !important; color: #374151 !important; background: #fff !important;
+    transition: all 0.15s ease;
+}
+.stButton > button:hover {
+    background: #F9FAFB !important; border-color: #534AB7 !important; color: #534AB7 !important;
+}
+
+/* ── Caption ─────────────────────────── */
+[data-testid="stCaptionContainer"] { color: #6B7280 !important; font-size: 12px !important; }
+
+/* ── Sidebar ─────────────────────────── */
+section[data-testid="stSidebar"] > div:first-child { padding-top: 0.75rem; }
+section[data-testid="stSidebar"] [data-testid="stExpander"] { border-color: #EAECF0 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -451,56 +534,55 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
     # ── Sidebar ──────────────────────────────────────────────────────────────
     with st.sidebar:
         st.markdown("### 📋 案件設定")
-
-        # 範本選擇（常駐可見）
         範本選擇 = st.selectbox("範本", list(範本參數.keys()), label_visibility="collapsed")
         if st.button("📂 載入此範本（含逐層表）", use_container_width=True):
             載入樓層表(範本樓層表(範本選擇), dict(範本參數[範本選擇]))
 
         P = st.session_state.params
         P["案件名稱"] = st.text_input("案件名稱", P.get("案件名稱", "新案"))
-
         st.divider()
 
         with st.expander("🏗️ 基地與容積", expanded=True):
-            # 雙欄輸入減少捲動高度
             c1, c2 = st.columns(2)
             P["基地面積"] = c1.number_input(
                 "基地面積 m²", value=float(P.get("基地面積", 1000.0)), step=1.0,
-                help="使照面積（踩坑3：勿用謄本）")
+                help="使照面積（踩坑3：謄本面積會高估免計上限，掩蓋超容）")
             P["人行廣場"] = c2.number_input(
                 "廣場捐地 m²", value=float(P.get("人行廣場", 0.0)), step=1.0)
             P["容積率"] = c1.number_input(
-                "容積率", value=float(P.get("容積率", 2.25)), step=0.01, format="%.4f")
+                "容積率", value=float(P.get("容積率", 2.25)), step=0.01, format="%.4f",
+                help="225% → 輸入 2.25，住宅區通常 0.8–3.6")
             P["獎勵率"] = c2.number_input(
                 "獎勵率", value=float(P.get("獎勵率", 0.50)), step=0.001, format="%.5f",
-                help="防災都更如 0.884")
+                help="防災都更最高 +88.4%（0.884），需與建築師面積表核對拆項")
             P["容積移轉"] = c1.number_input(
                 "容積移轉 m²", value=float(P.get("容積移轉", 0.0)), step=1.0)
             P["面積表計入容積"] = c2.number_input(
                 "面積表計入 m²", value=float(P.get("面積表計入容積", 0.0)), step=1.0,
-                help="0=由逐層加總。圖說為真。")
+                help="填建築師面積表彙總值（圖說為真）；0 = 由逐層加總")
 
         with st.expander("📋 免計基準"):
             c1, c2 = st.columns(2)
             P["梯廳免計基準"] = c1.selectbox(
-                "梯廳免計 %", [5, 8],
-                index=[5, 8].index(int(P.get("梯廳免計基準", 8))))
+                "梯廳免計 %（§162-1）", [5, 8],
+                index=[5, 8].index(int(P.get("梯廳免計基準", 8))),
+                help="逐層：各層樓板×%（非 FA 總量）；待建築師確認適用 5% 或 8%")
             P["陽台免計基準"] = c2.selectbox(
-                "陽台免計 %", [10, 15],
-                index=[10, 15].index(int(P.get("陽台免計基準", 10))))
+                "陽台免計 %（§162）", [10, 15],
+                index=[10, 15].index(int(P.get("陽台免計基準", 10))),
+                help="§162 一般為 10%；§162-3 特殊情況 15%，待建築師確認")
             P["公設比"] = c1.number_input(
-                "公設比", value=float(P.get("公設比", 0.33)), step=0.01, format="%.2f")
-            外皮係數 = c2.number_input(
-                "外皮係數", value=1.01, step=0.01, format="%.2f")
+                "公設比", value=float(P.get("公設比", 0.33)), step=0.01, format="%.2f",
+                help="坪效 Tab 有反推公設比驗算（方法論 §6 第一項）")
+            外皮係數 = c2.number_input("外皮係數", value=1.01, step=0.01, format="%.2f")
 
-        with st.expander("💰 成本假設"):
+        with st.expander("💰 成本快篩（L5，開發評效用）"):
             c1, c2 = st.columns(2)
             售價 = c1.number_input("售價（萬/坪）", value=80.0, step=1.0)
             土地成本 = c2.number_input("土地成本（萬）", value=50000.0, step=1000.0)
             營造單價 = c1.number_input(
                 "營造單價（萬/坪）", value=18.0, step=0.5,
-                help="× 下方營造坪基準 = 總營造成本")
+                help="× 下方基準坪數 = 總營造成本；L6 另有獨立的都更營造單價")
             管銷費率 = c2.number_input("管銷費率", value=0.05, step=0.01, format="%.2f")
             建融成數 = c1.number_input("建融成數", value=0.50, step=0.05, format="%.2f")
             利率 = c2.number_input("利率（年）", value=0.03, step=0.005, format="%.3f")
@@ -509,55 +591,91 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
             營造坪基準 = st.radio(
                 "營造坪數基準",
                 ["銷售坪數（前期保守估算）", "允建容積坪（實務成本估算）"],
-                help="實務上建築師依允建容積坪報估；銷售坪含公設攤提，數字較大，成本會被高估。")
+                help="誤用銷售坪會高估成本約 60%（方法論 §6 第六項）；實務依允建坪報估")
 
-        with st.expander("🏘️ 都更全案投報（總銷·共負·分回）"):
-            st.caption("對應建築師 Excel「坪效及獲利分析」。單位：萬/坪、萬元。")
+        with st.expander("🏘️ 都更全案投報（L6，總銷·共負·分回）"):
+            st.caption("對應建築師 Excel「坪效及獲利分析」。費率基數：代銷/稅→總銷，設計/工管→營造，管維→工程A。")
             c1, c2 = st.columns(2)
             P["住宅單價"] = c1.number_input(
-                "住宅單價", value=float(P.get("住宅單價", 80.0)), step=1.0)
+                "住宅單價（萬/坪）", value=float(P.get("住宅單價", 80.0)), step=1.0)
             P["店舖坪數"] = c2.number_input(
-                "店舖坪數", value=float(P.get("店舖坪數", 0.0)), step=1.0)
+                "1F 店舖坪數", value=float(P.get("店舖坪數", 0.0)), step=1.0)
             P["店舖單價"] = c1.number_input(
-                "店舖單價", value=float(P.get("店舖單價", 0.0)), step=1.0)
-            P["車位數"] = c2.number_input(
-                "車位數", value=int(P.get("車位數", 0)), step=1)
+                "店舖單價（萬/坪）", value=float(P.get("店舖單價", 0.0)), step=1.0,
+                help="查核：店舖單價 ≈ 住宅 × 1.4（方法論 §4②）")
+            P["車位數"] = c2.number_input("車位數", value=int(P.get("車位數", 0)), step=1)
             P["車位單價"] = c1.number_input(
-                "車位單價", value=float(P.get("車位單價", 220.0)), step=10.0)
+                "車位單價（萬/位）", value=float(P.get("車位單價", 220.0)), step=10.0)
             P["營造單價"] = c2.number_input(
-                "都更營造單價", value=float(P.get("營造單價", 22.0)), step=0.5,
-                help="含工程費 A。施工困難基地上調。")
-            P["戶數"] = c1.number_input(
-                "戶數", value=int(P.get("戶數", 0)), step=1)
+                "都更營造單價（萬/坪）", value=float(P.get("營造單價", 22.0)), step=0.5,
+                help="含工程費A；基礎→結構→裝修各期，施工困難基地上調")
+            P["戶數"] = c1.number_input("戶數", value=int(P.get("戶數", 0)), step=1)
             P["總營建坪"] = c2.number_input(
                 "總營建坪", value=float(P.get("總營建坪", 0.0)), step=10.0,
-                help="有面積表就填圖說總樓地板坪；空白時用允建坪×2 粗估。")
+                help="填圖說總樓地板坪（非銷售坪！方法論 §6 第六項）；0 = 允建坪×2 粗估")
+            # L6 土融利息新增：全案管理模式通常填 0，合建/買賣案填入土地取得成本
+            P["土融土地成本"] = c1.number_input(
+                "土融土地成本（萬）", value=float(P.get("土融土地成本", 0.0)), step=1000.0,
+                help="全案管理（地主自持）填 0；合建/買賣案填入土地取得成本，納入 D 土融利息計算")
             with st.expander("⚙️ 進階成本率（預設＝安和段送審值）"):
                 cc1, cc2 = st.columns(2)
-                P["管理費率"] = cc1.number_input("全案管理費率", value=float(P.get("管理費率", 財務率預設["管理費率"])), step=0.005, format="%.3f")
-                P["設計監造率"] = cc2.number_input("設計監造率", value=float(P.get("設計監造率", 財務率預設["設計監造率"])), step=0.005, format="%.3f")
-                P["工程管理率"] = cc1.number_input("工程管理率", value=float(P.get("工程管理率", 財務率預設["工程管理率"])), step=0.005, format="%.3f")
-                P["管維率"] = cc2.number_input("容獎管維率", value=float(P.get("管維率", 財務率預設["管維率"])), step=0.005, format="%.3f")
-                P["權變作業率"] = cc1.number_input("權變作業率", value=float(P.get("權變作業率", 財務率預設["權變作業率"])), step=0.005, format="%.3f")
-                P["營業稅率"] = cc2.number_input("營業稅率", value=float(P.get("營業稅率", 財務率預設["營業稅率"])), step=0.005, format="%.3f")
-                P["拆補每戶"] = cc1.number_input("拆補每戶（萬）", value=float(P.get("拆補每戶", 財務率預設["拆補每戶"])), step=5.0)
-                P["月租金每戶"] = cc2.number_input("月租金每戶（萬）", value=float(P.get("月租金每戶", 財務率預設["月租金每戶"])), step=0.5)
-                P["安置月數"] = st.number_input("安置月數", value=int(P.get("安置月數", 財務率預設["安置月數"])), step=1)
+                P["管理費率"] = cc1.number_input(
+                    "全案管理費率（基數：總銷）",
+                    value=float(P.get("管理費率", 財務率預設["管理費率"])), step=0.005, format="%.3f")
+                P["設計監造率"] = cc2.number_input(
+                    "設計監造率（基數：營造費）",
+                    value=float(P.get("設計監造率", 財務率預設["設計監造率"])), step=0.005, format="%.3f")
+                P["工程管理率"] = cc1.number_input(
+                    "工程管理率（基數：營造費）",
+                    value=float(P.get("工程管理率", 財務率預設["工程管理率"])), step=0.005, format="%.3f")
+                P["管維率"] = cc2.number_input(
+                    "容獎管維率（基數：工程費A）",
+                    value=float(P.get("管維率", 財務率預設["管維率"])), step=0.005, format="%.3f")
+                P["權變作業率"] = cc1.number_input(
+                    "權變作業率（基數：房地銷）",
+                    value=float(P.get("權變作業率", 財務率預設["權變作業率"])), step=0.005, format="%.3f")
+                P["營業稅率"] = cc2.number_input(
+                    "營業稅率（基數：房地銷）",
+                    value=float(P.get("營業稅率", 財務率預設["營業稅率"])), step=0.005, format="%.3f",
+                    help="正式權變共負須 5%；前期試算有時簡化為 1%，注意版本別")
+                P["拆補每戶"] = cc1.number_input(
+                    "拆補每戶（萬）",
+                    value=float(P.get("拆補每戶", 財務率預設["拆補每戶"])), step=5.0)
+                P["月租金每戶"] = cc2.number_input(
+                    "月租金每戶（萬）",
+                    value=float(P.get("月租金每戶", 財務率預設["月租金每戶"])), step=0.5)
+                P["安置月數"] = st.number_input(
+                    "安置月數", value=int(P.get("安置月數", 財務率預設["安置月數"])), step=1)
 
-    # ── 頁面標題 ──────────────────────────────────────────────────────────────
-    st.markdown(
-        f"## 🏗️ RE-DCF-Tool"
-        f"　<span style='font-size:15px;color:#888;font-weight:400'>"
-        f"都更/危老前期評估　｜　{P['案件名稱']}</span>",
-        unsafe_allow_html=True)
+    # ── 漸層標題橫幅（HTML）────────────────────────────────────────────────────
+    st.markdown(f"""
+<div style="background:linear-gradient(135deg,#534AB7 0%,#6B62D0 55%,#7B74CC 100%);
+border-radius:14px;padding:1.1rem 1.5rem;margin-bottom:1.1rem;
+display:flex;align-items:center;justify-content:space-between;
+box-shadow:0 4px 20px rgba(83,74,183,0.22);">
+  <div>
+    <div style="font-size:19px;font-weight:800;color:#fff;letter-spacing:-0.2px">
+      🏗️ RE-DCF-Tool
+    </div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.82);margin-top:3px;font-weight:400">
+      都更/危老前期評估　｜　{P['案件名稱']}
+    </div>
+  </div>
+  <div style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
+  border-radius:20px;padding:4px 14px;color:rgba(255,255,255,0.95);
+  font-size:11.5px;font-weight:600;white-space:nowrap;">
+    v4.1 · 逐層 §162
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
-    # ── 上傳工具（折疊，預設收合） ────────────────────────────────────────────
+    # ── 上傳工具（折疊）──────────────────────────────────────────────────────
     with st.expander("📤 上傳面積表 / 下載空白範本", expanded=False):
         cimp1, cimp2 = st.columns([3, 2])
         with cimp1:
             上傳 = st.file_uploader(
                 "匯入 Excel/CSV 面積表", type=["xlsx", "xls", "csv"],
-                help="欄位：樓層/樓板/計容積/梯廳/安全梯/陽台，對不上的留空，可在下表手動補。")
+                help="欄位：樓層/樓板/計容積/梯廳/安全梯/陽台，對不上的留空。")
             if 上傳 is not None and st.button("✅ 套用上傳的面積表"):
                 try:
                     df_up = 解析上傳(上傳)
@@ -571,15 +689,15 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
             st.download_button("⬇️ 下載空白匯入範本(CSV)",
                                空白.to_csv(index=False).encode("utf-8-sig"),
                                "面積表匯入範本.csv", "text/csv", use_container_width=True)
-            st.caption("取消「啟用」勾選 = 排除該層（如 B1F 防空避難室 §117，踩坑5）")
+            st.caption("取消「計入」勾選 = 排除該層（B1F 防空避難室 §117，踩坑5）")
 
-    # ── 逐層明細（主畫面常駐，高度精簡） ─────────────────────────────────────
-    st.caption("🏢 逐層明細（圖說為真實依據，取消「計入」勾選 = 排除該層）")
+    # ── 逐層明細（主畫面常駐）────────────────────────────────────────────────
+    st.caption("🏢 逐層明細（圖說為真實依據）")
     edited = st.data_editor(
         st.session_state.floors_df, key="floor_editor", num_rows="dynamic",
         use_container_width=True, height=240,
         column_config={
-            "啟用": st.column_config.CheckboxColumn("計入", help="取消＝排除該層"),
+            "啟用": st.column_config.CheckboxColumn("計入"),
             "樓層": st.column_config.TextColumn("樓層"),
             "樓板": st.column_config.NumberColumn("樓板 m²", format="%.2f"),
             "計容積": st.column_config.NumberColumn("計容積 m²", format="%.2f"),
@@ -593,7 +711,6 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
     容 = calc_容積查核(P, 樓層records)
     坪 = calc_坪效(容["允建容積"], 容["陽台免計面積"], P["公設比"], 外皮係數)
 
-    # 營造坪數基準切換（前期保守 vs 實務）
     _營造坪數 = (坪["允建容積坪"] if 營造坪基準 == "允建容積坪（實務成本估算）"
                else 坪["銷售坪數"])
 
@@ -601,44 +718,56 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
               管銷費率=管銷費率, 建融成數=建融成數, 利率=利率, 年期=年期, 稅費率=稅費率)
     評 = calc_開發評效(坪["銷售坪數"], 成本)
 
-    # L6 投報：組合財務率預設 + 各案覆寫參數
+    # L6 投報：財務率預設 ← 各案覆寫；新增 土融土地成本 (v4.1)
     投報參數 = {**財務率預設,
               **{k: P[k] for k in ("住宅單價", "店舖坪數", "店舖單價", "車位數", "車位單價",
                                    "營造單價", "設計監造率", "工程管理率", "管維率", "權變作業率",
                                    "拆補每戶", "月租金每戶", "安置月數", "管理費率", "營業稅率", "戶數")
-                 if k in P}}
+                 if k in P},
+              "土地成本": float(P.get("土融土地成本", 0.0))}
     _總營建坪 = float(P.get("總營建坪", 0.0) or 0.0) or (坪["允建容積坪"] * 2.0)
     投 = calc_投報全案(坪["銷售坪數"], _總營建坪, 投報參數)
 
-    # ── 結論橫幅 ──────────────────────────────────────────────────────────────
+    # ── 結論橫幅（HTML styled div）─────────────────────────────────────────────
     餘量 = 容["容積餘量"]
     免計超出 = 容["梯廳超出"] + 容["陽台超出"]
     評效 = 評["開發評效"]
     評效等級 = "優良" if 評效 > 5 else "可行" if 評效 >= 2 else "偏低"
+    st.markdown(_banner(餘量), unsafe_allow_html=True)
 
-    if 餘量 < 0:
-        st.error(f"❌ 容積超出 {abs(餘量):.2f} m²，需調整設計")
-    elif 餘量 <= 2:
-        st.success(f"✅ 規劃精準、合規（容積餘量 {餘量:.2f} m²）")
-    elif 餘量 <= 5:
-        st.success(f"✅ 合規（容積餘量 {餘量:.2f} m²）")
-    else:
-        st.warning(f"⚠️ 合規但容積未充分利用（餘量 {餘量:.2f} m²）")
-
-    # ── 4 欄 KPI（取代舊有四角色快覽卡 + 5 欄 metric） ─────────────────────────
+    # ── 4 欄 KPI（HTML 卡片，依狀態染色） ────────────────────────────────────
     k = st.columns(4)
-    k[0].metric("允建容積 m²", f"{容['允建容積']:.0f}",
-                help="FA × (1+獎勵率) + 容積移轉")
-    k[1].metric("計入容積 / 餘量", f"{容['計入容積_修正後']:.0f}",
-                f"餘量 {餘量:+.1f} m²")
-    k[2].metric("銷售坪數 / 銷坪比", f"{坪['銷售坪數']:.0f} 坪",
-                f"銷坪比 {坪['銷坪比']:.3f}")
-    k[3].metric("投報率 / 共負比", f"{投['報酬率']:.1%}",
-                f"共負 {投['共負比']:.1%}")
+    with k[0]:
+        st.markdown(_kpi(
+            "允建容積 m²",
+            f"{容['允建容積']:,.0f}",
+            f"FA {容['基準容積FA']:,.0f} × (1+{P['獎勵率']:.1%}) + 移轉 {P['容積移轉']:.0f}"
+        ), unsafe_allow_html=True)
+    with k[1]:
+        nc = "#DC2626" if 餘量 < 0 else ("#059669" if 餘量 <= 5 else "#D97706")
+        st.markdown(_kpi(
+            "計入容積 / 餘量",
+            f"{容['計入容積_修正後']:,.0f}",
+            f"餘量 {餘量:+.1f} m²", nc
+        ), unsafe_allow_html=True)
+    with k[2]:
+        nc = "#059669" if 1.58 <= 坪["銷坪比"] <= 1.68 else "#D97706"
+        st.markdown(_kpi(
+            "銷售坪數 / 銷坪比",
+            f"{坪['銷售坪數']:,.0f} 坪",
+            f"銷坪比 {坪['銷坪比']:.3f}（正常 1.58–1.68）", nc
+        ), unsafe_allow_html=True)
+    with k[3]:
+        nc = "#059669" if 投["報酬率"] >= 1.5 else ("#D97706" if 投["報酬率"] >= 1.0 else "#DC2626")
+        st.markdown(_kpi(
+            "投報率 / 共負比",
+            f"{投['報酬率']:.1%}",
+            f"共負比 {投['共負比']:.1%}", nc
+        ), unsafe_allow_html=True)
 
     st.markdown("")
 
-    # ── 5 個 Tab（原 6 Tab，容積帳 + 免計查核合併為「容積查核」） ───────────────
+    # ── 5 個 Tab ──────────────────────────────────────────────────────────────
     t1, t2, t3, t4, t5 = st.tabs([
         "① 容積查核",
         "② 坪效分析",
@@ -647,28 +776,28 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
         "⑤ 報告匯出",
     ])
 
-    # ── Tab ①：容積查核（容積帳 + 逐層免計，原 ①② 合併） ───────────────────────
+    # ── Tab ①：容積查核（容積帳 + 逐層免計） ────────────────────────────────
     with t1:
-        # 上半：儀表盤 + 容積帳明細
         col_g, col_t = st.columns([1, 1])
-
         with col_g:
             上限 = max(容["允建容積"] * 1.1, 容["計入容積_修正後"])
             g = go.Figure(go.Indicator(
                 mode="gauge+number+delta", value=容["計入容積_修正後"],
-                delta={"reference": 容["允建容積"], "increasing": {"color": "#E24B4A"}},
-                title={"text": "計入容積(修正後) vs 允建容積 m²"},
-                gauge={"axis": {"range": [0, 上限]},
+                delta={"reference": 容["允建容積"], "increasing": {"color": "#DC2626"}},
+                title={"text": "計入容積(修正後) vs 允建容積 m²",
+                       "font": {"size": 14, "color": "#374151", "family": "Arial"}},
+                gauge={"axis": {"range": [0, 上限],
+                                "tickfont": {"size": 11, "color": "#6B7280"}},
                        "bar": {"color": "#534AB7"},
-                       "threshold": {"line": {"color": "#E24B4A", "width": 4},
+                       "threshold": {"line": {"color": "#DC2626", "width": 3},
                                      "value": 容["允建容積"]},
                        "steps": [{"range": [0, 容["允建容積"]], "color": "#EAF3DC"},
-                                 {"range": [容["允建容積"], 上限], "color": "#FCEAEA"}]}))
-            g.update_layout(height=300, margin=dict(t=60, b=10))
+                                 {"range": [容["允建容積"], 上限], "color": "#FEE2E2"}]}))
+            g.update_layout(**_fig_layout(height=300, margin_top=60))
             st.plotly_chart(g, use_container_width=True)
             來源 = (f"面積表彙總值 {P['面積表計入容積']:.0f}" if P.get("面積表計入容積", 0) > 0
                     else "逐層計容積加總")
-            st.caption(f"紅線＝允建容積上限。　計入容積(圖說)來源：**{來源}** = {容['計入容積_圖說']:.0f} m²")
+            st.caption(f"紅線＝允建容積上限　｜　計入容積(圖說)來源：**{來源}** = {容['計入容積_圖說']:.0f} m²")
 
         with col_t:
             st.markdown("**容積帳明細**")
@@ -694,10 +823,9 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
 
         st.divider()
 
-        # 下半：逐層免計查核
         st.markdown(
             f"**逐層免計查核（梯廳基準 {P['梯廳免計基準']}%、"
-            f"陽台基準 {P['陽台免計基準']}% 或 1/8 投影，依建築師確認適用法則）**")
+            f"陽台基準 {P['陽台免計基準']}% 或 1/8 投影）**")
         梯比 = P["梯廳免計基準"] / 100
         陽比 = P["陽台免計基準"] / 100
         審 = []
@@ -734,7 +862,7 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
                 f"❌ 安全梯總量 {容['安全梯總量']:.1f} m² 超過上限 {容['安全梯上限']:.1f} m²"
                 f"（允建×15%），超出 {abs(安差):.1f} m²")
 
-    # ── Tab ②：坪效分析（原 Tab ③） ──────────────────────────────────────────
+    # ── Tab ②：坪效分析 ──────────────────────────────────────────────────────
     with t2:
         c = st.columns(4)
         c[0].metric("允建容積坪", f"{坪['允建容積坪']:.1f} 坪")
@@ -765,11 +893,21 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
         elif 1.58 <= 坪["銷坪比"] <= 1.68:
             st.success(f"✅ 銷坪比 {坪['銷坪比']:.3f} 落在住宅正常區間 1.58–1.68")
         else:
-            st.warning(
-                f"⚠️ 銷坪比 {坪['銷坪比']:.3f} 超出住宅正常區間 1.58–1.68，"
-                f"請確認陽台面積比例或公設比。")
+            st.warning(f"⚠️ 銷坪比 {坪['銷坪比']:.3f} 超出住宅正常區間 1.58–1.68，請確認陽台或公設比。")
 
-    # ── Tab ③：財務評效（原 Tab ④） ──────────────────────────────────────────
+        # ── 公設比反推驗算（方法論 §6 第一項：公設比顯示值≠公式實際值）────────
+        st.markdown("**🔍 公設比反推驗算**（方法論 §6 查核項）")
+        反推公設比 = 1 - 坪["室內坪"] / 坪["銷售坪數"] if 坪["銷售坪數"] > 0 else 0
+        diff = abs(反推公設比 - P["公設比"])
+        st.caption(
+            f"反推公設比 = 1 − 室內坪 / 銷售坪 = 1 − {坪['室內坪']:.2f} / {坪['銷售坪數']:.2f}"
+            f" = **{反推公設比:.2%}**　（設定值：{P['公設比']:.2%}，差 {diff:.2%}）")
+        if diff > 0.005:
+            st.warning(
+                f"⚠️ 設定公設比 {P['公設比']:.2%} 與反推 {反推公設比:.2%} 差距 {diff:.2%}。"
+                "Excel 常見問題：儲存格顯示值 ≠ 公式實際值，建議回頭確認公設比來源。")
+
+    # ── Tab ③：財務評效 ──────────────────────────────────────────────────────
     with t3:
         c = st.columns(3)
         c[0].metric("總銷售收入", f"{評['總銷售收入']:,.0f} 萬")
@@ -788,10 +926,13 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
             x=["土地", "營造", "管銷", "建融利息", "稅費雜支", "總成本"],
             y=[土地成本, 評["營造成本"], 評["管銷費"], 評["建融利息"], 評["稅費雜支"], 評["總開發成本"]],
             texttemplate="%{y:,.0f}", textposition="outside",
-            connector={"line": {"color": "#ccc"}}))
-        瀑布.update_layout(
+            connector={"line": {"color": "#D1D5DB"}},
+            increasing={"marker": {"color": "#6366F1"}},
+            decreasing={"marker": {"color": "#F43F5E"}},
+            totals={"marker": {"color": "#0F172A"}}))
+        瀑布.update_layout(**_fig_layout(
             title=f"開發成本拆解（萬）｜營造基準：{_營造坪數:.0f} 坪 × {營造單價:.1f} 萬/坪",
-            height=380, margin=dict(t=50, b=20))
+            height=380))
         st.plotly_chart(瀑布, use_container_width=True)
 
         st.markdown("**開發評效敏感度（公設比 × 售價）**")
@@ -808,14 +949,15 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
         heat = go.Figure(go.Heatmap(
             z=矩陣, x=[f"{p:.0f}萬" for p in 售價清單],
             y=[f"公設{c:.0%}" for c in 公設清單],
-            colorscale="RdYlGn", text=矩陣, texttemplate="%{text}"))
-        heat.update_layout(height=300, margin=dict(t=10, b=10))
+            colorscale="RdYlGn", text=矩陣, texttemplate="%{text}",
+            colorbar=dict(thickness=12, len=0.8)))
+        heat.update_layout(**_fig_layout(height=300))
         st.plotly_chart(heat, use_container_width=True)
 
-    # ── Tab ④：都更全案投報（原 Tab ⑤） ──────────────────────────────────────
+    # ── Tab ④：都更全案投報 ───────────────────────────────────────────────────
     with t4:
         st.caption(
-            "💡 從坪效深入到都更全案：總銷 → 共同負擔六大科目（都市更新權利變換實施辦法）→ 地主分回。"
+            f"總銷 → 共同負擔六大科目（都市更新權利變換實施辦法）→ 地主分回。"
             f"　營造坪採 **{_總營建坪:.0f} 坪**"
             f"（{'圖說總樓地板' if float(P.get('總營建坪', 0) or 0) > 0 else '允建坪×2 估算'}）。")
         m = st.columns(5)
@@ -829,21 +971,32 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
         with cc1:
             st.markdown("**總銷分析**")
             st.dataframe(pd.DataFrame([
-                {"項目": "住宅", "量": f"{投['住宅坪數']:.0f} 坪", "單價": f"{P['住宅單價']:.0f}", "金額(萬)": f"{投['住宅銷售']:,.0f}"},
-                {"項目": "店舖", "量": f"{P['店舖坪數']:.0f} 坪", "單價": f"{P['店舖單價']:.0f}", "金額(萬)": f"{投['店舖銷售']:,.0f}"},
-                {"項目": "車位", "量": f"{P['車位數']:.0f} 位", "單價": f"{P['車位單價']:.0f}", "金額(萬)": f"{投['車位銷售']:,.0f}"},
-                {"項目": "總銷", "量": "", "單價": f"均{投['平均單價']:.1f}", "金額(萬)": f"{投['總銷']:,.0f}"},
+                {"項目": "住宅", "量": f"{投['住宅坪數']:.0f} 坪",
+                 "單價": f"{P['住宅單價']:.0f}", "金額(萬)": f"{投['住宅銷售']:,.0f}"},
+                {"項目": "店舖", "量": f"{P['店舖坪數']:.0f} 坪",
+                 "單價": f"{P['店舖單價']:.0f}", "金額(萬)": f"{投['店舖銷售']:,.0f}"},
+                {"項目": "車位", "量": f"{P['車位數']:.0f} 位",
+                 "單價": f"{P['車位單價']:.0f}", "金額(萬)": f"{投['車位銷售']:,.0f}"},
+                {"項目": "總銷", "量": "",
+                 "單價": f"均{投['平均單價']:.1f}", "金額(萬)": f"{投['總銷']:,.0f}"},
             ]), use_container_width=True, hide_index=True)
         with cc2:
             st.markdown("**共同負擔六大科目**")
             st.dataframe(pd.DataFrame([
-                {"科目": "A 工程費用", "金額(萬)": f"{投['A工程費用']:,.0f}", "占總銷": f"{投['A工程費用']/投['總銷']:.1%}"},
-                {"科目": "B 管維費用", "金額(萬)": f"{投['B管維費用']:,.0f}", "占總銷": f"{投['B管維費用']/投['總銷']:.1%}"},
-                {"科目": "C 權變費用", "金額(萬)": f"{投['C權變費用']:,.0f}", "占總銷": f"{投['C權變費用']/投['總銷']:.1%}"},
-                {"科目": "D 貸款利息", "金額(萬)": f"{投['D貸款利息']:,.0f}", "占總銷": f"{投['D貸款利息']/投['總銷']:.1%}"},
-                {"科目": "E 稅捐", "金額(萬)": f"{投['E稅捐']:,.0f}", "占總銷": f"{投['E稅捐']/投['總銷']:.1%}"},
-                {"科目": "F 管理費用", "金額(萬)": f"{投['F管理費用']:,.0f}", "占總銷": f"{投['F管理費用']/投['總銷']:.1%}"},
-                {"科目": "🔴 共同負擔", "金額(萬)": f"{投['共同負擔']:,.0f}", "占總銷": f"{投['共負比']:.1%}"},
+                {"科目": "A 工程費用", "金額(萬)": f"{投['A工程費用']:,.0f}",
+                 "占總銷": f"{投['A工程費用']/投['總銷']:.1%}"},
+                {"科目": "B 管維費用", "金額(萬)": f"{投['B管維費用']:,.0f}",
+                 "占總銷": f"{投['B管維費用']/投['總銷']:.1%}"},
+                {"科目": "C 權變費用", "金額(萬)": f"{投['C權變費用']:,.0f}",
+                 "占總銷": f"{投['C權變費用']/投['總銷']:.1%}"},
+                {"科目": "D 貸款利息", "金額(萬)": f"{投['D貸款利息']:,.0f}",
+                 "占總銷": f"{投['D貸款利息']/投['總銷']:.1%}"},
+                {"科目": "E 稅捐", "金額(萬)": f"{投['E稅捐']:,.0f}",
+                 "占總銷": f"{投['E稅捐']/投['總銷']:.1%}"},
+                {"科目": "F 管理費用", "金額(萬)": f"{投['F管理費用']:,.0f}",
+                 "占總銷": f"{投['F管理費用']/投['總銷']:.1%}"},
+                {"科目": "🔴 共同負擔", "金額(萬)": f"{投['共同負擔']:,.0f}",
+                 "占總銷": f"{投['共負比']:.1%}"},
             ]), use_container_width=True, hide_index=True)
 
         wf = go.Figure(go.Waterfall(
@@ -852,16 +1005,58 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
             y=[投["A工程費用"], 投["B管維費用"], 投["C權變費用"], 投["D貸款利息"],
                投["E稅捐"], 投["F管理費用"], 投["共同負擔"]],
             texttemplate="%{y:,.0f}", textposition="outside",
-            connector={"line": {"color": "#ccc"}}))
-        wf.update_layout(title="共同負擔六大科目拆解（萬）", height=360, margin=dict(t=50, b=20))
+            connector={"line": {"color": "#D1D5DB"}},
+            increasing={"marker": {"color": "#6366F1"}},
+            totals={"marker": {"color": "#0F172A"}}))
+        wf.update_layout(**_fig_layout(title="共同負擔六大科目拆解（萬）", height=360))
         st.plotly_chart(wf, use_container_width=True)
 
         分回每戶 = 投["地主分回價值"] / P["戶數"] if P.get("戶數") else 0
         st.info(
-            f"地主分回價值 **{投['地主分回價值']:,.0f} 萬**（占總銷 {投['地主分回比']:.1%}）"
-            + (f"，約 {int(P['戶數'])} 戶平均每戶 **{分回每戶:,.0f} 萬**（依各戶權值估價，僅示意）"
+            f"地主分回 **{投['地主分回價值']:,.0f} 萬**（占總銷 {投['地主分回比']:.1%}）"
+            + (f"，{int(P['戶數'])} 戶平均 **{分回每戶:,.0f} 萬/戶**（依各戶權值估價，僅示意）"
                if P.get("戶數") else "")
-            + "。全案管理：地主分回近全部可建價值扣共負，實施者收管理費不分屋。")
+            + "。共負比 > 65% 時留意地主接受度。")
+
+        # ── 費率基數一覽（方法論 §4③：看清各費率的基數）────────────────────────
+        with st.expander("📋 費率基數一覽（方法論 §4③ 查核項）", expanded=False):
+            st.caption("各費率計算基數不同，誤用基數會造成嚴重誤算（方法論 §4③、§6）。")
+            明細 = 投["_明細"]
+            st.dataframe(pd.DataFrame([
+                {"費率名稱": "設計監造", "費率基數": "A中的營造費",
+                 "基數(萬)": f"{明細['營造成本']:,.0f}",
+                 "費率": f"{P.get('設計監造率', 0.05):.1%}",
+                 "金額(萬)": f"{明細['設計監造']:,.0f}"},
+                {"費率名稱": "工程管理", "費率基數": "A中的營造費",
+                 "基數(萬)": f"{明細['營造成本']:,.0f}",
+                 "費率": f"{P.get('工程管理率', 0.03):.1%}",
+                 "金額(萬)": f"{明細['工程管理']:,.0f}"},
+                {"費率名稱": "B 容獎管維", "費率基數": "A 工程費用合計",
+                 "基數(萬)": f"{投['A工程費用']:,.0f}",
+                 "費率": f"{P.get('管維率', 0.01):.1%}",
+                 "金額(萬)": f"{投['B管維費用']:,.0f}"},
+                {"費率名稱": "C 權變作業", "費率基數": "房地總銷",
+                 "基數(萬)": f"{投['房地總銷']:,.0f}",
+                 "費率": f"{P.get('權變作業率', 0.015):.1%}",
+                 "金額(萬)": f"{明細['權變作業']:,.0f}"},
+                {"費率名稱": "E 營業稅", "費率基數": "房地總銷",
+                 "基數(萬)": f"{投['房地總銷']:,.0f}",
+                 "費率": f"{P.get('營業稅率', 0.05):.1%}",
+                 "金額(萬)": f"{明細['營業稅']:,.0f}"},
+                {"費率名稱": "E 印花稅", "費率基數": "總銷",
+                 "基數(萬)": f"{投['總銷']:,.0f}",
+                 "費率": f"{財務率預設['印花稅率']:.1%}",
+                 "金額(萬)": f"{明細['印花稅']:,.0f}"},
+                {"費率名稱": "F 全案管理費", "費率基數": "總銷",
+                 "基數(萬)": f"{投['總銷']:,.0f}",
+                 "費率": f"{P.get('管理費率', 0.05):.1%}",
+                 "金額(萬)": f"{投['F管理費用']:,.0f}"},
+            ]), use_container_width=True, hide_index=True)
+            if P.get("土融土地成本", 0) > 0:
+                st.caption(
+                    f"土融利息（D）：土地成本 {P['土融土地成本']:,.0f}萬 × "
+                    f"成數 {財務率預設['土融成數']:.0%} × 利率 {財務率預設['土融利率']:.1%} × "
+                    f"年期 {財務率預設['土融年期']:.0f}年 = {明細['土融利息']:,.0f} 萬")
 
         st.markdown("**報酬率敏感度（住宅售價 × 營造單價）**")
         sens = calc_投報敏感度(坪["銷售坪數"], _總營建坪, 投報參數)
@@ -870,12 +1065,13 @@ section[data-testid="stSidebar"] > div:first-child { padding-top: 0.8rem; }
             z=z,
             x=[f"售{P['住宅單價'] * (1 + d):.0f}" for d in sens["售價變動"]],
             y=[f"營{P['營造單價'] * (1 + d):.1f}" for d in sens["營造變動"]],
-            colorscale="RdYlGn", text=z, texttemplate="%{text}%"))
-        heat.update_layout(height=320, margin=dict(t=10, b=10))
+            colorscale="RdYlGn", text=z, texttemplate="%{text}%",
+            colorbar=dict(thickness=12, len=0.8)))
+        heat.update_layout(**_fig_layout(height=320))
         st.plotly_chart(heat, use_container_width=True)
-        st.caption("數值＝報酬率(%)。售價↑報酬↑、營造↑報酬↓。共負比＞65%（分回＜35%）時留意地主接受度。")
+        st.caption("數值＝報酬率(%)。售價↑報酬↑、營造↑報酬↓。共負比 > 65%（分回 < 35%）時留意地主接受度。")
 
-    # ── Tab ⑤：報告匯出（原 Tab ⑥） ──────────────────────────────────────────
+    # ── Tab ⑤：報告匯出 ──────────────────────────────────────────────────────
     with t5:
         報告 = 產生報告(P["案件名稱"], P, 容, 坪, 評, _營造坪數, 投)
         st.markdown(報告)

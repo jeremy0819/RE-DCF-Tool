@@ -1,9 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-RE-DCF-Tool — 都更/危老前期評估工具（v4.1 UI 精化 + 參數補強版）
+RE-DCF-Tool — 都更/危老前期評估工具（v4.2 設計感升級版）
 ==============================================================
 永盛開發建設「建築坪效與前期評估」Excel 財務模型的程式化版本。
 執行：streamlit run app.py
+
+v4.2 更新（創意設計 × 專業質感，計算層不動）：
+  1.【字體】導入 Noto Sans TC + Space Grotesk（數字等寬對齊 tabular-nums）。
+  2.【Hero】Header 改深靛藍「藍圖網格」橫幅（建築製圖意象）+ 版本徽章。
+  3.【流程帶】新增 L2→L6 計算流程帶 _pipeline()，六層架構即時數值串接。
+  4.【KPI】卡片頂部狀態色 accent 條 + 迷你進度條（容積使用率/銷坪比定位/投報），hover 浮起。
+  5.【區塊標題】_section() 紫色側標，統一各 Tab 小節層級。
+  6.【背景】淡靛放射漸層底 + 卡片陰影層次 + 頁尾資訊列。
+  7.【圖表】Plotly 字體/品牌色同步（#534AB7 / #1E1B4B）。
 
 v4.1 更新（UI 精化 + 方法論蒸餾）：
   1.【UI】全局 CSS 升級：漸層 Tab、卡片陰影、專業字重、Grid 排版。
@@ -324,7 +333,7 @@ def 產生報告(案件名稱, 參數, 容, 坪, 評, 營造坪數, 投=None) ->
 
 > 共同負擔科目依《都市更新權利變換實施辦法》費用負擔分類；參數基準＝安和段送審試算。
 """
-    return f"""# {案件名稱} 前期評估報告（RE-DCF-Tool v4.1）
+    return f"""# {案件名稱} 前期評估報告（RE-DCF-Tool v4.2）
 
 ## 結論：{結論}（容積餘量 {容['容積餘量']:.2f} m²）
 
@@ -367,7 +376,7 @@ def 產生報告(案件名稱, 參數, 容, 坪, 評, 營造坪數, 投=None) ->
 | **開發評效** | **{評['開發評效']:.2f}（{評效等級}）** |
 {都更全案段}
 ---
-*RE-DCF-Tool v4.1｜圖說為真實依據｜逐層 §162 查核｜都更全案投報＝權利變換六大共負*
+*RE-DCF-Tool v4.2｜圖說為真實依據｜逐層 §162 查核｜都更全案投報＝權利變換六大共負*
 """
 
 
@@ -382,60 +391,124 @@ def 載入樓層表(df, 參數=None):
     st.rerun()
 
 
-def _kpi(label, value, note="", note_color="#6B7280"):
-    """HTML KPI 卡片（成熟風格）：大數字 + 狀態色注釋，作為 st.metric 的替代。"""
-    note_html = (f'<div style="font-size:12px;color:{note_color};margin-top:5px;'
-                 f'line-height:1.4">{note}</div>') if note else ""
+def _kpi(label, value, note="", note_color="#64748B", accent="#534AB7", bar=None):
+    """HTML KPI 卡片 v2：頂部 accent 色條 + 大數字（等寬數字字體）+ 狀態注釋 + 迷你進度條。
+
+    bar：0–1 之間的比例（如容積使用率），None = 不顯示進度條。
+    accent：卡片頂條與進度條顏色，依狀態傳入紅/黃/綠/品牌紫。
+    """
+    bar_html = ""
+    if bar is not None:
+        p = max(0.0, min(1.0, bar))
+        bar_html = (
+            f'<div style="margin-top:10px;height:4px;border-radius:2px;background:#EEF0F7;'
+            f'overflow:hidden"><div style="width:{p * 100:.0f}%;height:100%;border-radius:2px;'
+            f'background:linear-gradient(90deg,{accent},{accent}99)"></div></div>')
+    note_html = (f'<div style="font-size:12px;color:{note_color};margin-top:6px;'
+                 f'line-height:1.45">{note}</div>') if note else ""
     return (
-        f'<div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;'
-        f'padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05),0 2px 8px rgba(0,0,0,0.04);'
-        f'height:100%;min-height:90px;">'
-        f'<div style="font-size:10.5px;font-weight:700;color:#9CA3AF;text-transform:uppercase;'
-        f'letter-spacing:0.8px;margin-bottom:8px">{label}</div>'
-        f'<div style="font-size:22px;font-weight:700;color:#111827;line-height:1.15">{value}</div>'
-        f'{note_html}</div>'
+        f'<div class="kpi-card" style="position:relative;background:#fff;border:1px solid #E7E9F2;'
+        f'border-radius:14px;padding:18px 20px 16px;height:100%;min-height:96px;overflow:hidden;'
+        f'box-shadow:0 1px 2px rgba(15,23,42,0.04),0 8px 24px -18px rgba(15,23,42,0.25);">'
+        f'<div style="position:absolute;top:0;left:0;right:0;height:3px;'
+        f'background:linear-gradient(90deg,{accent},{accent}44)"></div>'
+        f'<div style="font-size:10.5px;font-weight:700;color:#8A91A8;text-transform:uppercase;'
+        f'letter-spacing:1px;margin-bottom:8px">{label}</div>'
+        f'<div style="font-family:\'Space Grotesk\',\'Noto Sans TC\',sans-serif;font-size:24px;'
+        f'font-weight:700;color:#0F172A;line-height:1.1;'
+        f'font-variant-numeric:tabular-nums">{value}</div>'
+        f'{note_html}{bar_html}</div>'
     )
 
 
 def _banner(餘量):
-    """HTML 結論橫幅，依容積餘量顯示對應狀態色。"""
+    """HTML 結論橫幅 v2：圓形狀態圖示 + 主訊息 + 右側「L4 容積帳」層級膠囊。"""
     if 餘量 < 0:
-        bg, lb, tc, icon = "#FEF2F2", "#DC2626", "#991B1B", "❌"
+        bg, lb, tc, icon = "#FEF2F2", "#DC2626", "#991B1B", "✕"
         msg = f"容積超出 {abs(餘量):.2f} m²，需調整設計"
     elif 餘量 <= 2:
-        bg, lb, tc, icon = "#F0FDF4", "#16A34A", "#166534", "✅"
+        bg, lb, tc, icon = "#F0FDF4", "#16A34A", "#166534", "✓"
         msg = f"規劃精準、合規（容積餘量 {餘量:.2f} m²）"
     elif 餘量 <= 5:
-        bg, lb, tc, icon = "#F0FDF4", "#16A34A", "#166534", "✅"
+        bg, lb, tc, icon = "#F0FDF4", "#16A34A", "#166534", "✓"
         msg = f"合規（容積餘量 {餘量:.2f} m²）"
     else:
-        bg, lb, tc, icon = "#FFFBEB", "#D97706", "#92400E", "⚠️"
+        bg, lb, tc, icon = "#FFFBEB", "#D97706", "#92400E", "!"
         msg = f"合規但容積未充分利用（餘量 {餘量:.2f} m²）"
     return (
-        f'<div style="background:{bg};border:1px solid rgba(0,0,0,0.06);'
-        f'border-left:5px solid {lb};border-radius:10px;'
-        f'padding:13px 20px;display:flex;align-items:center;gap:12px;margin:0.6rem 0;">'
-        f'<span style="font-size:18px;flex-shrink:0">{icon}</span>'
-        f'<span style="font-weight:700;color:{tc};font-size:15px">{msg}</span>'
+        f'<div style="background:{bg};border:1px solid {lb}22;'
+        f'border-left:5px solid {lb};border-radius:12px;'
+        f'padding:12px 18px;display:flex;align-items:center;gap:13px;margin:0.5rem 0 0.7rem;">'
+        f'<span style="width:27px;height:27px;border-radius:50%;background:{lb};color:#fff;'
+        f'display:inline-flex;align-items:center;justify-content:center;'
+        f'font-size:14px;font-weight:800;flex-shrink:0">{icon}</span>'
+        f'<span style="font-weight:700;color:{tc};font-size:14.5px">{msg}</span>'
+        f'<span style="margin-left:auto;font-size:10.5px;font-weight:700;color:{lb};'
+        f'border:1px solid {lb}55;border-radius:999px;padding:2px 11px;'
+        f'letter-spacing:0.5px;white-space:nowrap">L4 容積帳</span>'
         f'</div>'
     )
+
+
+def _section(title, sub=""):
+    """區塊標題：品牌紫漸層側標 + 標題 + 灰色補充（取代散落的 st.markdown 粗體）。"""
+    sub_html = (f'<span style="font-size:12px;color:#8A91A8;font-weight:400;'
+                f'margin-left:10px">{sub}</span>') if sub else ""
+    return (
+        f'<div style="display:flex;align-items:center;margin:8px 0 8px">'
+        f'<span style="width:4px;height:16px;border-radius:2px;'
+        f'background:linear-gradient(180deg,#534AB7,#7C6FE0);margin-right:9px;'
+        f'flex-shrink:0"></span>'
+        f'<span style="font-size:14.5px;font-weight:700;color:#1E293B">{title}</span>'
+        f'{sub_html}</div>'
+    )
+
+
+def _pipeline(容, 坪, 評效, 投):
+    """L2→L6 計算流程帶：六層架構的即時數值串接成 pipeline chips，一眼看穿全案脈絡。"""
+    免計超出 = 容["梯廳超出"] + 容["陽台超出"]
+    steps = [
+        ("L2", "允建容積", f"{容['允建容積']:,.0f} m²"),
+        ("L3", "免計超出", f"{免計超出:.1f} m²"),
+        ("L4", "容積餘量", f"{容['容積餘量']:+,.1f} m²"),
+        ("L4.5", "銷售坪", f"{坪['銷售坪數']:,.0f} 坪"),
+        ("L5", "開發評效", f"{評效:.2f}"),
+        ("L6", "投報率", f"{投['報酬率']:.0%}"),
+    ]
+    箭頭 = '<span style="color:#C3C8DB;font-size:13px;margin:0 3px;flex-shrink:0">›</span>'
+    chips = 箭頭.join(
+        f'<span style="display:inline-flex;align-items:center;gap:7px;background:#fff;'
+        f'border:1px solid #E7E9F2;border-radius:999px;padding:5px 13px 5px 6px;'
+        f'white-space:nowrap;box-shadow:0 1px 2px rgba(15,23,42,0.04)">'
+        f'<span style="background:linear-gradient(135deg,#534AB7,#7C6FE0);color:#fff;'
+        f'font-size:10px;font-weight:700;border-radius:999px;padding:3px 8px;'
+        f'letter-spacing:0.4px">{code}</span>'
+        f'<span style="font-size:11.5px;color:#8A91A8">{name}</span>'
+        f'<span style="font-size:12.5px;font-weight:700;color:#0F172A;'
+        f'font-variant-numeric:tabular-nums">{val}</span>'
+        f'</span>'
+        for code, name, val in steps)
+    return (f'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:3px;'
+            f'margin:2px 0 4px">{chips}</div>')
 
 
 def _fig_layout(title="", height=380, margin_top=None):
     """統一 Plotly 佈局：字體/底色/留白/懸停，確保全站圖表風格一致。"""
     mt = margin_top if margin_top is not None else (50 if title else 20)
     base = dict(
-        font=dict(family="Arial, sans-serif", size=12, color="#374151"),
+        font=dict(family="Noto Sans TC, Space Grotesk, Arial, sans-serif",
+                  size=12, color="#374151"),
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="#F8FAFC",
+        plot_bgcolor="rgba(248,250,252,0.6)",
         height=height,
         margin=dict(t=mt, b=20, l=10, r=10),
-        hoverlabel=dict(bgcolor="white", bordercolor="#E5E7EB", font_size=12),
+        hoverlabel=dict(bgcolor="white", bordercolor="#E7E9F2", font_size=12),
     )
     if title:
         base["title"] = dict(
             text=title,
-            font=dict(size=14, color="#374151", family="Arial, sans-serif"),
+            font=dict(size=14, color="#1E293B",
+                      family="Noto Sans TC, Space Grotesk, Arial, sans-serif"),
             x=0, xanchor="left",
         )
     return base
@@ -450,78 +523,114 @@ def main():
     # ── 全域 CSS ─────────────────────────────────────────────────────────────
     st.markdown("""
 <style>
-/* ── 全域 ─────────────────────────────── */
-.main .block-container { padding: 0.75rem 1.5rem 2rem !important; max-width: 1400px; }
+/* ── 字體（v4.2：Noto Sans TC 中文 + Space Grotesk 數字/英文）────── */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+html, body, [class*="st-"], .stMarkdown {
+    font-family: 'Noto Sans TC', 'Space Grotesk', -apple-system, 'Segoe UI', sans-serif !important;
+}
+
+/* ── 全域：淡靛放射漸層底 ─────────────── */
+.stApp {
+    background:
+        radial-gradient(ellipse 60% 40% at 85% -5%, rgba(83,74,183,0.08), transparent),
+        radial-gradient(ellipse 50% 30% at 0% 100%, rgba(124,111,224,0.05), transparent),
+        #F7F8FC;
+}
+.main .block-container { padding: 0.75rem 1.5rem 1rem !important; max-width: 1400px; }
 #MainMenu, footer { visibility: hidden; }
 
-/* ── Tab：漸層選中 ───────────────────── */
+/* ── KPI 卡 hover 浮起 ─────────────────── */
+.kpi-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(15,23,42,0.05), 0 14px 32px -16px rgba(83,74,183,0.35) !important;
+}
+
+/* ── Tab：白底膠囊條 + 漸層選中 ───────── */
 .stTabs [data-baseweb="tab-list"] {
-    background: #F3F4F6; border-radius: 12px;
-    padding: 4px; gap: 2px; border: 1px solid #E5E7EB;
+    background: #fff; border-radius: 13px;
+    padding: 4px; gap: 2px; border: 1px solid #E7E9F2;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04);
 }
 .stTabs [data-baseweb="tab"] {
-    border-radius: 8px; padding: 7px 20px;
+    border-radius: 9px; padding: 7px 20px;
     color: #6B7280; font-size: 13px; font-weight: 500;
+    transition: color 0.15s ease;
 }
+.stTabs [data-baseweb="tab"]:hover { color: #534AB7; }
 .stTabs [aria-selected="true"] {
     background: linear-gradient(135deg,#534AB7 0%,#6B62D0 100%) !important;
     color: #fff !important; font-weight: 600;
-    box-shadow: 0 2px 8px rgba(83,74,183,0.28);
+    box-shadow: 0 2px 10px rgba(83,74,183,0.32);
 }
 
 /* ── Expander ────────────────────────── */
 [data-testid="stExpander"] {
-    border: 1px solid #E5E7EB !important;
-    border-radius: 10px !important;
+    border: 1px solid #E7E9F2 !important;
+    border-radius: 11px !important;
     overflow: hidden; margin-bottom: 4px;
+    background: #fff;
 }
 [data-testid="stExpander"] summary {
-    background: #FAFAFA !important; padding: 10px 14px !important;
+    background: #FBFBFE !important; padding: 10px 14px !important;
 }
 [data-testid="stExpander"] summary p {
     font-weight: 600 !important; color: #374151 !important; font-size: 13.5px !important;
 }
 
 /* ── Divider ─────────────────────────── */
-hr { border: none !important; border-top: 1px solid #E5E7EB !important; margin: 1rem 0 !important; }
+hr { border: none !important; border-top: 1px solid #E7E9F2 !important; margin: 1rem 0 !important; }
 
-/* ── Metric 備援樣式 ─────────────────── */
+/* ── Metric（Tab 內備援樣式）──────────── */
 [data-testid="metric-container"] {
-    background: #fff; border: 1px solid #E5E7EB; border-radius: 12px;
-    padding: 16px 18px !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05),0 2px 8px rgba(0,0,0,0.04);
+    background: #fff; border: 1px solid #E7E9F2; border-radius: 13px;
+    padding: 15px 18px !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -18px rgba(15,23,42,0.22);
 }
 [data-testid="metric-container"] label {
     font-size: 10.5px !important; font-weight: 700 !important;
-    color: #9CA3AF !important; text-transform: uppercase; letter-spacing: 0.7px;
+    color: #8A91A8 !important; text-transform: uppercase; letter-spacing: 0.8px;
 }
-[data-testid="stMetricValue"] { font-size: 22px !important; font-weight: 700 !important; color: #111827 !important; }
+[data-testid="stMetricValue"] {
+    font-family: 'Space Grotesk', 'Noto Sans TC', sans-serif !important;
+    font-size: 22px !important; font-weight: 700 !important; color: #0F172A !important;
+    font-variant-numeric: tabular-nums;
+}
 [data-testid="stMetricDelta"] { font-size: 12px !important; }
 
-/* ── DataFrame 表頭 ──────────────────── */
+/* ── DataFrame：表頭品牌淡紫 + 等寬數字 ── */
 [data-testid="stDataFrameResizable"] th {
-    background: #F3F4F6 !important; color: #374151 !important;
-    font-weight: 600 !important; border-bottom: 2px solid #E5E7EB !important;
+    background: #F4F3FB !important; color: #43398F !important;
+    font-weight: 700 !important; border-bottom: 2px solid #E3E0F5 !important;
     font-size: 12px !important;
 }
-[data-testid="stDataFrameResizable"] td { font-size: 13px !important; color: #374151 !important; }
+[data-testid="stDataFrameResizable"] td {
+    font-size: 13px !important; color: #374151 !important;
+    font-variant-numeric: tabular-nums;
+}
 
 /* ── Button ──────────────────────────── */
 .stButton > button {
-    border-radius: 8px !important; font-weight: 500 !important;
-    border: 1px solid #D1D5DB !important; color: #374151 !important; background: #fff !important;
+    border-radius: 9px !important; font-weight: 500 !important;
+    border: 1px solid #D6D9E4 !important; color: #374151 !important; background: #fff !important;
     transition: all 0.15s ease;
 }
 .stButton > button:hover {
-    background: #F9FAFB !important; border-color: #534AB7 !important; color: #534AB7 !important;
+    background: #F6F5FC !important; border-color: #534AB7 !important; color: #534AB7 !important;
+    box-shadow: 0 2px 8px rgba(83,74,183,0.15);
 }
 
 /* ── Caption ─────────────────────────── */
-[data-testid="stCaptionContainer"] { color: #6B7280 !important; font-size: 12px !important; }
+[data-testid="stCaptionContainer"] { color: #8A91A8 !important; font-size: 12px !important; }
 
-/* ── Sidebar ─────────────────────────── */
+/* ── Sidebar：白底 + 右緣陰影分界 ──────── */
+section[data-testid="stSidebar"] {
+    background: #fff;
+    box-shadow: 1px 0 0 #E7E9F2, 4px 0 18px -12px rgba(15,23,42,0.12);
+}
 section[data-testid="stSidebar"] > div:first-child { padding-top: 0.75rem; }
-section[data-testid="stSidebar"] [data-testid="stExpander"] { border-color: #EAECF0 !important; }
+section[data-testid="stSidebar"] [data-testid="stExpander"] { border-color: #ECEEF5 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -647,24 +756,46 @@ section[data-testid="stSidebar"] [data-testid="stExpander"] { border-color: #EAE
                 P["安置月數"] = st.number_input(
                     "安置月數", value=int(P.get("安置月數", 財務率預設["安置月數"])), step=1)
 
-    # ── 漸層標題橫幅（HTML）────────────────────────────────────────────────────
+    # ── Hero 標題橫幅（v4.2：深靛藍「藍圖網格」背景，建築製圖意象）───────────────
     st.markdown(f"""
-<div style="background:linear-gradient(135deg,#534AB7 0%,#6B62D0 55%,#7B74CC 100%);
-border-radius:14px;padding:1.1rem 1.5rem;margin-bottom:1.1rem;
-display:flex;align-items:center;justify-content:space-between;
-box-shadow:0 4px 20px rgba(83,74,183,0.22);">
-  <div>
-    <div style="font-size:19px;font-weight:800;color:#fff;letter-spacing:-0.2px">
-      🏗️ RE-DCF-Tool
+<div style="position:relative;overflow:hidden;
+background:linear-gradient(118deg,#1E1B4B 0%,#3B3486 52%,#534AB7 100%);
+border-radius:16px;padding:1.25rem 1.6rem;margin-bottom:1rem;
+box-shadow:0 6px 28px -8px rgba(30,27,75,0.45);">
+  <div style="position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,0.055) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,0.055) 1px,transparent 1px);
+  background-size:26px 26px;pointer-events:none;"></div>
+  <div style="position:absolute;right:-30px;top:-46px;width:190px;height:190px;
+  border:1.5px dashed rgba(255,255,255,0.14);border-radius:50%;pointer-events:none;"></div>
+  <div style="position:relative;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div>
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <span style="font-family:'Space Grotesk','Noto Sans TC',sans-serif;font-size:21px;
+        font-weight:700;color:#fff;letter-spacing:-0.3px">🏗️ RE-DCF-Tool</span>
+        <span style="font-size:12px;color:rgba(255,255,255,0.55);
+        letter-spacing:2.5px;font-weight:600">PRE-DEVELOPMENT&nbsp;ANALYSIS</span>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:5px;font-weight:400">
+        都更／危老前期評估　<span style="color:rgba(255,255,255,0.4)">｜</span>
+        　<span style="font-weight:700;color:#fff">{P['案件名稱']}</span>
+      </div>
     </div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.82);margin-top:3px;font-weight:400">
-      都更/危老前期評估　｜　{P['案件名稱']}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
+      backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
+      color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
+        v4.2</span>
+      <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
+      backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
+      color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
+        逐層 §162</span>
+      <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
+      backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
+      color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
+        圖說為真</span>
     </div>
-  </div>
-  <div style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
-  border-radius:20px;padding:4px 14px;color:rgba(255,255,255,0.95);
-  font-size:11.5px;font-weight:600;white-space:nowrap;">
-    v4.1 · 逐層 §162
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -692,7 +823,8 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
             st.caption("取消「計入」勾選 = 排除該層（B1F 防空避難室 §117，踩坑5）")
 
     # ── 逐層明細（主畫面常駐）────────────────────────────────────────────────
-    st.caption("🏢 逐層明細（圖說為真實依據）")
+    st.markdown(_section("逐層明細", "圖說為真實依據　·　取消「計入」勾選＝排除該層"),
+                unsafe_allow_html=True)
     edited = st.data_editor(
         st.session_state.floors_df, key="floor_editor", num_rows="dynamic",
         use_container_width=True, height=240,
@@ -728,41 +860,47 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
     _總營建坪 = float(P.get("總營建坪", 0.0) or 0.0) or (坪["允建容積坪"] * 2.0)
     投 = calc_投報全案(坪["銷售坪數"], _總營建坪, 投報參數)
 
-    # ── 結論橫幅（HTML styled div）─────────────────────────────────────────────
+    # ── L2→L6 計算流程帶 + 結論橫幅（v4.2）────────────────────────────────────
     餘量 = 容["容積餘量"]
     免計超出 = 容["梯廳超出"] + 容["陽台超出"]
     評效 = 評["開發評效"]
     評效等級 = "優良" if 評效 > 5 else "可行" if 評效 >= 2 else "偏低"
+    st.markdown(_pipeline(容, 坪, 評效, 投), unsafe_allow_html=True)
     st.markdown(_banner(餘量), unsafe_allow_html=True)
 
-    # ── 4 欄 KPI（HTML 卡片，依狀態染色） ────────────────────────────────────
+    # ── 4 欄 KPI（HTML 卡片：accent 色條 + 迷你進度條） ──────────────────────
     k = st.columns(4)
     with k[0]:
+        使用率 = 容["計入容積_修正後"] / 容["允建容積"] if 容["允建容積"] else 0
         st.markdown(_kpi(
             "允建容積 m²",
             f"{容['允建容積']:,.0f}",
-            f"FA {容['基準容積FA']:,.0f} × (1+{P['獎勵率']:.1%}) + 移轉 {P['容積移轉']:.0f}"
+            f"FA {容['基準容積FA']:,.0f} × (1+{P['獎勵率']:.1%}) + 移轉 {P['容積移轉']:.0f}",
+            accent="#534AB7"
         ), unsafe_allow_html=True)
     with k[1]:
         nc = "#DC2626" if 餘量 < 0 else ("#059669" if 餘量 <= 5 else "#D97706")
         st.markdown(_kpi(
             "計入容積 / 餘量",
             f"{容['計入容積_修正後']:,.0f}",
-            f"餘量 {餘量:+.1f} m²", nc
+            f"餘量 {餘量:+.1f} m²（使用率 {使用率:.1%}）", nc,
+            accent=nc, bar=使用率
         ), unsafe_allow_html=True)
     with k[2]:
         nc = "#059669" if 1.58 <= 坪["銷坪比"] <= 1.68 else "#D97706"
         st.markdown(_kpi(
             "銷售坪數 / 銷坪比",
             f"{坪['銷售坪數']:,.0f} 坪",
-            f"銷坪比 {坪['銷坪比']:.3f}（正常 1.58–1.68）", nc
+            f"銷坪比 {坪['銷坪比']:.3f}（正常 1.58–1.68）", nc,
+            accent="#0D9488", bar=(坪["銷坪比"] - 1.40) / 0.40
         ), unsafe_allow_html=True)
     with k[3]:
         nc = "#059669" if 投["報酬率"] >= 1.5 else ("#D97706" if 投["報酬率"] >= 1.0 else "#DC2626")
         st.markdown(_kpi(
             "投報率 / 共負比",
             f"{投['報酬率']:.1%}",
-            f"共負比 {投['共負比']:.1%}", nc
+            f"共負比 {投['共負比']:.1%}", nc,
+            accent=nc, bar=min(投["報酬率"] / 2.0, 1.0)
         ), unsafe_allow_html=True)
 
     st.markdown("")
@@ -785,7 +923,8 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
                 mode="gauge+number+delta", value=容["計入容積_修正後"],
                 delta={"reference": 容["允建容積"], "increasing": {"color": "#DC2626"}},
                 title={"text": "計入容積(修正後) vs 允建容積 m²",
-                       "font": {"size": 14, "color": "#374151", "family": "Arial"}},
+                       "font": {"size": 14, "color": "#1E293B",
+                                "family": "Noto Sans TC, Space Grotesk, Arial"}},
                 gauge={"axis": {"range": [0, 上限],
                                 "tickfont": {"size": 11, "color": "#6B7280"}},
                        "bar": {"color": "#534AB7"},
@@ -800,7 +939,7 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
             st.caption(f"紅線＝允建容積上限　｜　計入容積(圖說)來源：**{來源}** = {容['計入容積_圖說']:.0f} m²")
 
         with col_t:
-            st.markdown("**容積帳明細**")
+            st.markdown(_section("容積帳明細", "L2 容積 → L4 容積帳"), unsafe_allow_html=True)
             基地使用 = P["基地面積"] - P["人行廣場"]
             st.dataframe(pd.DataFrame([
                 {"項目": "基地使用面積", "m²": f"{基地使用:.2f}",
@@ -823,9 +962,10 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
 
         st.divider()
 
-        st.markdown(
-            f"**逐層免計查核（梯廳基準 {P['梯廳免計基準']}%、"
-            f"陽台基準 {P['陽台免計基準']}% 或 1/8 投影）**")
+        st.markdown(_section(
+            "逐層免計查核",
+            f"梯廳基準 {P['梯廳免計基準']}%　·　陽台基準 {P['陽台免計基準']}% 或 1/8 投影　·　L3"),
+            unsafe_allow_html=True)
         梯比 = P["梯廳免計基準"] / 100
         陽比 = P["陽台免計基準"] / 100
         審 = []
@@ -870,7 +1010,7 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
         c[2].metric("銷售坪數", f"{坪['銷售坪數']:.1f} 坪")
         c[3].metric("銷坪比", f"{坪['銷坪比']:.3f}")
 
-        st.markdown("**銷售坪數推導步驟**")
+        st.markdown(_section("銷售坪數推導步驟", "L4.5 銷售坪效"), unsafe_allow_html=True)
         陽台免計坪 = 容["陽台免計面積"] / 平方米換坪
         st.dataframe(pd.DataFrame([
             {"步驟": "① 允建容積", "m²": f"{容['允建容積']:.2f}", "坪": f"{坪['允建容積坪']:.2f}"},
@@ -896,7 +1036,7 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
             st.warning(f"⚠️ 銷坪比 {坪['銷坪比']:.3f} 超出住宅正常區間 1.58–1.68，請確認陽台或公設比。")
 
         # ── 公設比反推驗算（方法論 §6 第一項：公設比顯示值≠公式實際值）────────
-        st.markdown("**🔍 公設比反推驗算**（方法論 §6 查核項）")
+        st.markdown(_section("公設比反推驗算", "方法論 §6 查核項"), unsafe_allow_html=True)
         反推公設比 = 1 - 坪["室內坪"] / 坪["銷售坪數"] if 坪["銷售坪數"] > 0 else 0
         diff = abs(反推公設比 - P["公設比"])
         st.caption(
@@ -926,16 +1066,16 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
             x=["土地", "營造", "管銷", "建融利息", "稅費雜支", "總成本"],
             y=[土地成本, 評["營造成本"], 評["管銷費"], 評["建融利息"], 評["稅費雜支"], 評["總開發成本"]],
             texttemplate="%{y:,.0f}", textposition="outside",
-            connector={"line": {"color": "#D1D5DB"}},
-            increasing={"marker": {"color": "#6366F1"}},
+            connector={"line": {"color": "#D6D9E4"}},
+            increasing={"marker": {"color": "#534AB7"}},
             decreasing={"marker": {"color": "#F43F5E"}},
-            totals={"marker": {"color": "#0F172A"}}))
+            totals={"marker": {"color": "#1E1B4B"}}))
         瀑布.update_layout(**_fig_layout(
             title=f"開發成本拆解（萬）｜營造基準：{_營造坪數:.0f} 坪 × {營造單價:.1f} 萬/坪",
             height=380))
         st.plotly_chart(瀑布, use_container_width=True)
 
-        st.markdown("**開發評效敏感度（公設比 × 售價）**")
+        st.markdown(_section("開發評效敏感度", "公設比 × 售價"), unsafe_allow_html=True)
         公設清單 = [round(P["公設比"] - 0.02 + 0.01 * i, 2) for i in range(5)]
         售價清單 = [round(售價 - 10 + 5 * i, 0) for i in range(5)]
         矩陣 = [[round(calc_開發評效(
@@ -969,7 +1109,7 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
 
         cc1, cc2 = st.columns([1, 1])
         with cc1:
-            st.markdown("**總銷分析**")
+            st.markdown(_section("總銷分析", "住宅＋店舖＋車位"), unsafe_allow_html=True)
             st.dataframe(pd.DataFrame([
                 {"項目": "住宅", "量": f"{投['住宅坪數']:.0f} 坪",
                  "單價": f"{P['住宅單價']:.0f}", "金額(萬)": f"{投['住宅銷售']:,.0f}"},
@@ -981,7 +1121,7 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
                  "單價": f"均{投['平均單價']:.1f}", "金額(萬)": f"{投['總銷']:,.0f}"},
             ]), use_container_width=True, hide_index=True)
         with cc2:
-            st.markdown("**共同負擔六大科目**")
+            st.markdown(_section("共同負擔六大科目", "權利變換實施辦法"), unsafe_allow_html=True)
             st.dataframe(pd.DataFrame([
                 {"科目": "A 工程費用", "金額(萬)": f"{投['A工程費用']:,.0f}",
                  "占總銷": f"{投['A工程費用']/投['總銷']:.1%}"},
@@ -1005,9 +1145,9 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
             y=[投["A工程費用"], 投["B管維費用"], 投["C權變費用"], 投["D貸款利息"],
                投["E稅捐"], 投["F管理費用"], 投["共同負擔"]],
             texttemplate="%{y:,.0f}", textposition="outside",
-            connector={"line": {"color": "#D1D5DB"}},
-            increasing={"marker": {"color": "#6366F1"}},
-            totals={"marker": {"color": "#0F172A"}}))
+            connector={"line": {"color": "#D6D9E4"}},
+            increasing={"marker": {"color": "#534AB7"}},
+            totals={"marker": {"color": "#1E1B4B"}}))
         wf.update_layout(**_fig_layout(title="共同負擔六大科目拆解（萬）", height=360))
         st.plotly_chart(wf, use_container_width=True)
 
@@ -1058,7 +1198,7 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
                     f"成數 {財務率預設['土融成數']:.0%} × 利率 {財務率預設['土融利率']:.1%} × "
                     f"年期 {財務率預設['土融年期']:.0f}年 = {明細['土融利息']:,.0f} 萬")
 
-        st.markdown("**報酬率敏感度（住宅售價 × 營造單價）**")
+        st.markdown(_section("報酬率敏感度", "住宅售價 × 營造單價"), unsafe_allow_html=True)
         sens = calc_投報敏感度(坪["銷售坪數"], _總營建坪, 投報參數)
         z = [[round(v * 100, 0) for v in 列] for 列 in sens["矩陣"]]
         heat = go.Figure(go.Heatmap(
@@ -1080,6 +1220,15 @@ box-shadow:0 4px 20px rgba(83,74,183,0.22);">
         st.download_button("⬇️ 下載逐層表(CSV)",
                            edited.to_csv(index=False).encode("utf-8-sig"),
                            f"{P['案件名稱']}_逐層表.csv", "text/csv")
+
+    # ── 頁尾資訊列（v4.2）─────────────────────────────────────────────────────
+    st.markdown(
+        '<div style="margin-top:2rem;padding:13px 2px 4px;border-top:1px solid #E7E9F2;'
+        'display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;'
+        'font-size:11.5px;color:#9AA1B5">'
+        '<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.2</b>　永盛開發建設 前期評估</span>'
+        '<span>圖說為真　·　§162 逐層查核　·　都市更新權利變換實施辦法</span>'
+        '</div>', unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

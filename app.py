@@ -376,7 +376,7 @@ def 產生報告(案件名稱, 參數, 容, 坪, 評, 營造坪數, 投=None) ->
 | **開發評效** | **{評['開發評效']:.2f}（{評效等級}）** |
 {都更全案段}
 ---
-*RE-DCF-Tool v4.2｜圖說為真實依據｜逐層 §162 查核｜都更全案投報＝權利變換六大共負*
+*RE-DCF-Tool v4.3｜圖說為真實依據｜逐層 §162 查核｜都更全案投報＝權利變換六大共負*
 """
 
 
@@ -523,11 +523,19 @@ def main():
     # ── 全域 CSS ─────────────────────────────────────────────────────────────
     st.markdown("""
 <style>
-/* ── 字體（v4.2：Noto Sans TC 中文 + Space Grotesk 數字/英文）────── */
+/* ── 字體（v4.3 fix：不覆蓋 Streamlit icon font，emoji fallback 加回）── */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;600;700&display=swap');
 
-html, body, [class*="st-"], .stMarkdown {
-    font-family: 'Noto Sans TC', 'Space Grotesk', -apple-system, 'Segoe UI', sans-serif !important;
+/* 只改文字內容，不動 Streamlit 元件 class（避免 icon 字型被蓋）*/
+html, body {
+    font-family: 'Noto Sans TC', 'Space Grotesk', -apple-system, 'Segoe UI',
+                 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+.stMarkdown p, .stMarkdown li, .stMarkdown td, .stMarkdown th,
+.stText, [data-testid="stCaptionContainer"],
+[data-testid="stExpander"] summary p {
+    font-family: 'Noto Sans TC', 'Space Grotesk', -apple-system, 'Segoe UI',
+                 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif !important;
 }
 
 /* ── 全域：淡靛放射漸層底 ─────────────── */
@@ -642,56 +650,85 @@ section[data-testid="stSidebar"] [data-testid="stExpander"] { border-color: #ECE
 
     # ── Sidebar ──────────────────────────────────────────────────────────────
     with st.sidebar:
-        st.markdown("### 📋 案件設定")
-        範本選擇 = st.selectbox("範本", list(範本參數.keys()), label_visibility="collapsed")
-        if st.button("📂 載入此範本（含逐層表）", use_container_width=True):
+        # ── 操作步驟引導（v4.3）──────────────────────────────────────────────
+        st.markdown("""
+<div style="background:linear-gradient(135deg,#534AB7,#7C6FE0);
+border-radius:11px;padding:10px 14px 8px;margin-bottom:10px">
+<div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:6px">
+  使用步驟</div>
+<div style="color:rgba(255,255,255,0.88);font-size:11.5px;line-height:1.9">
+  <b>1</b>　載入範本或輸入案件資訊<br>
+  <b>2</b>　確認容積與免計基準（§162）<br>
+  <b>3</b>　逐層填入面積表或上傳 Excel<br>
+  <b>4</b>　查看右側 Tab 查核結果</div>
+</div>
+""", unsafe_allow_html=True)
+
+        st.markdown("**案件設定**")
+        範本選擇 = st.selectbox("選擇範本", list(範本參數.keys()), label_visibility="collapsed")
+        if st.button("載入此範本（含逐層面積表）", use_container_width=True):
             載入樓層表(範本樓層表(範本選擇), dict(範本參數[範本選擇]))
 
         P = st.session_state.params
         P["案件名稱"] = st.text_input("案件名稱", P.get("案件名稱", "新案"))
         st.divider()
 
-        with st.expander("🏗️ 基地與容積", expanded=True):
+        # Step 1
+        with st.expander("Step 1  基地資訊（L2 容積計算）", expanded=True):
+            st.caption("FA = 基地使用面積 × 容積率　→　允建容積 = FA × (1+獎勵率) + 容積移轉")
             c1, c2 = st.columns(2)
             P["基地面積"] = c1.number_input(
                 "基地面積 m²", value=float(P.get("基地面積", 1000.0)), step=1.0,
-                help="使照面積（踩坑3：謄本面積會高估免計上限，掩蓋超容）")
+                help="⚠️ 用使照面積，不用謄本面積！謄本面積會高估免計上限、掩蓋超容（踩坑3）")
             P["人行廣場"] = c2.number_input(
-                "廣場捐地 m²", value=float(P.get("人行廣場", 0.0)), step=1.0)
+                "廣場捐地 m²", value=float(P.get("人行廣場", 0.0)), step=1.0,
+                help="扣除後才是有效基地面積")
             P["容積率"] = c1.number_input(
                 "容積率", value=float(P.get("容積率", 2.25)), step=0.01, format="%.4f",
-                help="225% → 輸入 2.25，住宅區通常 0.8–3.6")
+                help="住二 = 2.25，商業區 = 5.60，輸入小數（225% → 2.25）")
             P["獎勵率"] = c2.number_input(
-                "獎勵率", value=float(P.get("獎勵率", 0.50)), step=0.001, format="%.5f",
-                help="防災都更最高 +88.4%（0.884），需與建築師面積表核對拆項")
+                "都更獎勵率", value=float(P.get("獎勵率", 0.50)), step=0.001, format="%.5f",
+                help="防災都更最高 +88.4%（0.88407），需與建築師面積表拆項核對")
             P["容積移轉"] = c1.number_input(
-                "容積移轉 m²", value=float(P.get("容積移轉", 0.0)), step=1.0)
+                "容積移轉 m²", value=float(P.get("容積移轉", 0.0)), step=1.0,
+                help="購買可移入的容積（單位 m²，直接加計）")
             P["面積表計入容積"] = c2.number_input(
-                "面積表計入 m²", value=float(P.get("面積表計入容積", 0.0)), step=1.0,
-                help="填建築師面積表彙總值（圖說為真）；0 = 由逐層加總")
+                "圖說計入容積 m²", value=float(P.get("面積表計入容積", 0.0)), step=1.0,
+                help="填建築師面積表彙總值（圖說為真實依據）；填 0 = 由逐層各欄加總")
 
-        with st.expander("📋 免計基準"):
+        # Step 2
+        with st.expander("Step 2  §162 免計基準（L3 三項免計）"):
+            st.caption("建築技術規則 §162：梯廳、安全梯、陽台三項可不計入容積，但各有上限。超出上限須補計入。")
             c1, c2 = st.columns(2)
             P["梯廳免計基準"] = c1.selectbox(
-                "梯廳免計 %（§162-1）", [5, 8],
+                "梯廳免計上限（§162-1）", [5, 8],
                 index=[5, 8].index(int(P.get("梯廳免計基準", 8))),
-                help="逐層：各層樓板×%（非 FA 總量）；待建築師確認適用 5% 或 8%")
+                help="各層樓板面積 × %（逐層判斷，非 FA 總量）\n"
+                     "§162-1：「不計入容積之梯廳，不得超過各層樓板面積 8%（附表）」\n"
+                     "待建築師確認：適用 5% 或 8%？")
             P["陽台免計基準"] = c2.selectbox(
-                "陽台免計 %（§162）", [10, 15],
+                "陽台免計上限（§162）", [10, 15],
                 index=[10, 15].index(int(P.get("陽台免計基準", 10))),
-                help="§162 一般為 10%；§162-3 特殊情況 15%，待建築師確認")
+                help="各層樓板面積 × %（逐層判斷）\n"
+                     "§162：一般住宅 10%\n"
+                     "§162-3：特殊情況可至 15%（待建築師確認條文依據）")
+            st.caption("安全梯：允建容積 × 15% 為總量上限（§162-1），自動計算。")
             P["公設比"] = c1.number_input(
-                "公設比", value=float(P.get("公設比", 0.33)), step=0.01, format="%.2f",
-                help="坪效 Tab 有反推公設比驗算（方法論 §6 第一項）")
-            外皮係數 = c2.number_input("外皮係數", value=1.01, step=0.01, format="%.2f")
+                "公設比（坪效用）", value=float(P.get("公設比", 0.33)), step=0.01, format="%.2f",
+                help="影響銷售坪數計算：銷售坪 = 室內坪 ÷ (1 − 公設比)\n"
+                     "Tab ② 有反推驗算，防止公設比填錯造成 10 倍誤差")
+            外皮係數 = c2.number_input("外皮係數", value=1.01, step=0.01, format="%.2f",
+                                     help="牆厚修正係數，一般取 1.01")
 
-        with st.expander("💰 成本快篩（L5，開發評效用）"):
+        # Step 3
+        with st.expander("Step 3  財務快篩（L5 開發評效）"):
+            st.caption("快速評估「總銷 ÷ 總成本」—— > 5 優良 / 2–5 可行 / < 2 偏低")
             c1, c2 = st.columns(2)
             售價 = c1.number_input("售價（萬/坪）", value=80.0, step=1.0)
             土地成本 = c2.number_input("土地成本（萬）", value=50000.0, step=1000.0)
             營造單價 = c1.number_input(
                 "營造單價（萬/坪）", value=18.0, step=0.5,
-                help="× 下方基準坪數 = 總營造成本；L6 另有獨立的都更營造單價")
+                help="L5 快篩用；L6 都更全案投報有獨立的「都更營造單價」")
             管銷費率 = c2.number_input("管銷費率", value=0.05, step=0.01, format="%.2f")
             建融成數 = c1.number_input("建融成數", value=0.50, step=0.05, format="%.2f")
             利率 = c2.number_input("利率（年）", value=0.03, step=0.005, format="%.3f")
@@ -700,10 +737,12 @@ section[data-testid="stSidebar"] [data-testid="stExpander"] { border-color: #ECE
             營造坪基準 = st.radio(
                 "營造坪數基準",
                 ["銷售坪數（前期保守估算）", "允建容積坪（實務成本估算）"],
-                help="誤用銷售坪會高估成本約 60%（方法論 §6 第六項）；實務依允建坪報估")
+                help="⚠️ 誤用銷售坪會高估成本約 60%（含公設）\n"
+                     "建築師實務上依允建容積坪估算")
 
-        with st.expander("🏘️ 都更全案投報（L6，總銷·共負·分回）"):
-            st.caption("對應建築師 Excel「坪效及獲利分析」。費率基數：代銷/稅→總銷，設計/工管→營造，管維→工程A。")
+        # Step 4
+        with st.expander("Step 4  都更全案投報（L6）"):
+            st.caption("對應建築師 Excel「坪效及獲利分析」\n費率基數：代銷/稅 → 總銷，設計/工管 → 營造費，管維 → 工程費A")
             c1, c2 = st.columns(2)
             P["住宅單價"] = c1.number_input(
                 "住宅單價（萬/坪）", value=float(P.get("住宅單價", 80.0)), step=1.0)
@@ -786,7 +825,7 @@ box-shadow:0 6px 28px -8px rgba(30,27,75,0.45);">
       <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
       backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
       color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
-        v4.2</span>
+        v4.3</span>
       <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
       backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
       color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
@@ -822,20 +861,75 @@ box-shadow:0 6px 28px -8px rgba(30,27,75,0.45);">
                                "面積表匯入範本.csv", "text/csv", use_container_width=True)
             st.caption("取消「計入」勾選 = 排除該層（B1F 防空避難室 §117，踩坑5）")
 
+    # ── §162 法規對照卡（v4.3：建築師反映連結性要高）──────────────────────────
+    with st.expander("📐 建築技術規則 §162 三項免計——欄位對照", expanded=False):
+        st.markdown("""
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin:4px 0">
+
+<div style="background:#F4F3FB;border-radius:10px;padding:10px 13px;border-left:3px solid #534AB7">
+<div style="font-size:10px;font-weight:700;color:#534AB7;letter-spacing:0.8px;margin-bottom:4px">
+梯廳　欄位 ▶ §162-1</div>
+<div style="font-size:12.5px;color:#1E293B;font-weight:600;margin-bottom:4px">
+免計上限：各層樓板 × 8%<br>（附表，或 5%）</div>
+<div style="font-size:11.5px;color:#64748B;line-height:1.6">
+逐層判斷，不得以 FA×8% 總量計算。超出部分<b>補計入</b>容積（踩坑2）。</div>
+</div>
+
+<div style="background:#FFF7ED;border-radius:10px;padding:10px 13px;border-left:3px solid #F59E0B">
+<div style="font-size:10px;font-weight:700;color:#D97706;letter-spacing:0.8px;margin-bottom:4px">
+安全梯　欄位 ▶ §162-1</div>
+<div style="font-size:12.5px;color:#1E293B;font-weight:600;margin-bottom:4px">
+免計上限：允建容積 × 15%<br>（總量上限）</div>
+<div style="font-size:11.5px;color:#64748B;line-height:1.6">
+安全梯＋機電設備合計上限。<b>基準是允建容積</b>，非 FA（踩坑6）。</div>
+</div>
+
+<div style="background:#F0FDF4;border-radius:10px;padding:10px 13px;border-left:3px solid #16A34A">
+<div style="font-size:10px;font-weight:700;color:#16A34A;letter-spacing:0.8px;margin-bottom:4px">
+陽台　欄位 ▶ §162 / §162-3</div>
+<div style="font-size:12.5px;color:#1E293B;font-weight:600;margin-bottom:4px">
+免計上限：各層樓板 × 10%<br>（§162-3 特殊案件 15%）</div>
+<div style="font-size:11.5px;color:#64748B;line-height:1.6">
+逐層判斷，超出補計入。亦可用 1/8 投影法（兩法並列，取較嚴者）。</div>
+</div>
+
+<div style="background:#FFF1F2;border-radius:10px;padding:10px 13px;border-left:3px solid #E11D48">
+<div style="font-size:10px;font-weight:700;color:#E11D48;letter-spacing:0.8px;margin-bottom:4px">
+B1F 防空避難室　▶ §117</div>
+<div style="font-size:12.5px;color:#1E293B;font-weight:600;margin-bottom:4px">
+依法設置者不計入<br>樓地板面積</div>
+<div style="font-size:11.5px;color:#64748B;line-height:1.6">
+在逐層表格<b>取消「計入」勾選</b>即可排除。依條文強制規定，非選項（踩坑5）。</div>
+</div>
+
+</div>
+""", unsafe_allow_html=True)
+
     # ── 逐層明細（主畫面常駐）────────────────────────────────────────────────
-    st.markdown(_section("逐層明細", "圖說為真實依據　·　取消「計入」勾選＝排除該層"),
+    st.markdown(_section("逐層面積明細", "圖說為真實依據　·　B1F 請取消勾選排除（§117）"),
                 unsafe_allow_html=True)
     edited = st.data_editor(
         st.session_state.floors_df, key="floor_editor", num_rows="dynamic",
         use_container_width=True, height=240,
         column_config={
-            "啟用": st.column_config.CheckboxColumn("計入"),
+            "啟用": st.column_config.CheckboxColumn(
+                "計入", help="取消勾選＝排除此層（B1F 防空避難室依 §117 不計入，務必取消）"),
             "樓層": st.column_config.TextColumn("樓層"),
-            "樓板": st.column_config.NumberColumn("樓板 m²", format="%.2f"),
-            "計容積": st.column_config.NumberColumn("計容積 m²", format="%.2f"),
-            "梯廳": st.column_config.NumberColumn("梯廳 m²", format="%.2f"),
-            "安全梯": st.column_config.NumberColumn("安全梯 m²", format="%.2f"),
-            "陽台": st.column_config.NumberColumn("陽台 m²", format="%.2f"),
+            "樓板": st.column_config.NumberColumn(
+                "樓板 m²", format="%.2f",
+                help="各層樓地板面積，是梯廳/陽台免計上限的計算基準（§162 逐層法）"),
+            "計容積": st.column_config.NumberColumn(
+                "計容積 m²", format="%.2f",
+                help="圖說面積表的計入容積欄位（填 0 時由側欄「圖說計入容積」彙總值代替）"),
+            "梯廳": st.column_config.NumberColumn(
+                "梯廳 m²", format="%.2f",
+                help="§162-1：免計上限＝各層樓板 × 8%（或 5%）\n超出部分會補計入容積"),
+            "安全梯": st.column_config.NumberColumn(
+                "安全梯 m²", format="%.2f",
+                help="§162-1：總量上限＝允建容積 × 15%（注意：基準是允建容積，不是 FA）"),
+            "陽台": st.column_config.NumberColumn(
+                "陽台 m²", format="%.2f",
+                help="§162：免計上限＝各層樓板 × 10%（§162-3 特殊 15%）\n超出部分補計入容積"),
         })
     樓層records = edited.to_dict("records")
 
@@ -1226,7 +1320,7 @@ box-shadow:0 6px 28px -8px rgba(30,27,75,0.45);">
         '<div style="margin-top:2rem;padding:13px 2px 4px;border-top:1px solid #E7E9F2;'
         'display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;'
         'font-size:11.5px;color:#9AA1B5">'
-        '<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.2</b>　永盛開發建設 前期評估</span>'
+        '<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.3</b>　永盛開發建設 前期評估</span>'
         '<span>圖說為真　·　§162 逐層查核　·　都市更新權利變換實施辦法</span>'
         '</div>', unsafe_allow_html=True)
 

@@ -232,6 +232,82 @@ Sidebar 有切換鈕：「**前期保守**（用銷售坪）」vs「**實務**�
 
 ---
 
+---
+
+## 部署後驗收清單（每次 main 合併後必做，30 秒）
+
+> 目的：確認「程式碼正確」≠「用戶看到的正確」。以下 4 項任何一項失敗，都要先修再做下一個需求。
+
+打開 Streamlit Cloud 的部署 URL，執行：
+
+```
+□ 頁尾顯示的 build 日期是今天的 commit 日期？（確認部署已更新）
+□ Sidebar 所有步驟標題（Step 1~4）emoji 與文字正常顯示？
+□ 載入「中正段」範本 → L2→L6 流程帶數字出現？
+□ Tab ① 點開 → 三項免計核對表有資料列？
+```
+
+---
+
+## 建築師反饋收集協議（建築師說「有出入」時，先問這三個問題再改 code）
+
+> 目的：不把症狀直接轉發給 AI——先把症狀解讀成具體的輸入/輸出差異，才能精準修正。
+
+收到建築師反饋後，先收集以下資訊再開新對話：
+
+```
+Q1：他在哪個步驟卡住？
+    → 是「找不到輸入欄位」、「數字算出來不對」、還是「結果格式看不懂」？
+
+Q2：他的實際操作是什麼？
+    → 例：他有沒有從 Excel 面積表匯入？他是手動輸入還是直接填圖說數值？
+    → 他在建築師事務所用的欄位名稱叫什麼（梯廳還是走廊？陽台還是露台？）？
+
+Q3：他期望看到什麼，我們工具給他看到什麼？
+    → 把兩個數字或兩個畫面截圖附上。
+```
+
+拿到這三個答案後，才能精準告訴 AI 要改什麼。
+
+---
+
+## Git 工作流程（直接 push，不開 PR）
+
+> PR 在這個專案只有一個 reviewer（自己），沒有審查價值，改為直接推送。
+
+```bash
+# 標準流程（每次改完 test_golden.py 全 PASS 後）
+python test_golden.py                          # 必須全 PASS 才能 commit
+git add app.py                                 # 只加改過的檔案，不 git add -A
+git commit -m "fix/feat/docs: 說明改了什麼"
+git push origin claude/claude-md-docs-ls9Bu   # 推到開發分支
+
+# 要上線時（直接 push main，不開 PR）
+git checkout main
+git merge claude/claude-md-docs-ls9Bu --no-ff -m "merge: v4.x 說明"
+git push origin main
+git checkout claude/claude-md-docs-ls9Bu      # 切回繼續開發
+```
+
+> 例外：有需要外部審查（建築師確認計算邏輯）時才開 PR，正常開發直接 push。
+
+---
+
+## 版本號更新規則（v4.4 起）
+
+每次改 `app.py` 時，同步更新以下兩處，部署後才能從頁尾確認版本：
+
+```python
+# 頁尾（app.py 最後幾行）
+_build = "YYYY-MM-DD"          # 改成今天的日期
+'RE-DCF-Tool v4.X'             # 版本號 +0.1
+
+# Hero 橫幅
+v4.X                           # 同步更新
+```
+
+---
+
 ## 第二階段（先不做）
 
 住宅工具上線後，複製架構做商辦版（NOI + Cap Rate + 持有期報酬），另開對話處理。

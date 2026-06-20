@@ -281,18 +281,28 @@ def 範本樓層表(鍵: str) -> pd.DataFrame:
 
 
 def 解析上傳(file) -> pd.DataFrame:
-    """讀 Excel/CSV，盡量對應到標準欄位。對不上的欄位留空，讓使用者在表中補。"""
+    """讀 Excel/CSV，盡量對應到標準欄位。對不上的欄位留空，讓使用者在表中補。
+
+    別名表涵蓋台灣建築師事務所常見欄位命名（建照申請、使照圖說格式）。
+    """
     if file.name.lower().endswith(".csv"):
         df = pd.read_csv(file)
     else:
         df = pd.read_excel(file)
     別名 = {
-        "樓層": ["樓層", "層", "floor", "Floor", "樓別"],
-        "樓板": ["樓板", "樓地板", "樓板面積", "樓地板面積"],
-        "計容積": ["計容積", "計入容積", "容積面積", "樓地板面積(容積)"],
-        "梯廳": ["梯廳", "梯廳面積"],
-        "安全梯": ["安全梯", "安全梯機電", "安全梯及機電", "機電"],
-        "陽台": ["陽台", "陽臺", "陽台面積"],
+        "樓層": ["樓層", "層", "floor", "Floor", "樓別", "FL", "F.", "層別", "棟層", "樓",
+                "FLOOR", "Level"],
+        "樓板": ["樓板", "樓地板", "樓板面積", "樓地板面積", "樓板面積(m²)", "樓地板面積(m²)",
+                "總面積", "A面積", "各層樓地板面積", "樓地板"],
+        "計容積": ["計容積", "計入容積", "容積面積", "樓地板面積(容積)", "容積計算面積",
+                  "容積樓地板面積", "計容面積", "容積 m²", "容積計入", "計入容積(m²)",
+                  "計入容積面積", "容積計算"],
+        "梯廳": ["梯廳", "梯廳面積", "走道", "電梯廳", "梯廳及電梯", "梯廳(m²)",
+                "梯廳走道", "走廊", "走廊梯廳", "電梯間及梯廳"],
+        "安全梯": ["安全梯", "安全梯機電", "安全梯及機電", "機電", "安全梯(m²)",
+                  "樓梯間", "安全梯間", "安全梯機電空間", "防火梯", "特別安全梯"],
+        "陽台": ["陽台", "陽臺", "陽台面積", "露台", "陽台(m²)", "陽台及露台",
+                "陽台面積(m²)", "陽臺面積", "露臺"],
     }
     out = pd.DataFrame()
     out["啟用"] = True
@@ -376,7 +386,7 @@ def 產生報告(案件名稱, 參數, 容, 坪, 評, 營造坪數, 投=None) ->
 | **開發評效** | **{評['開發評效']:.2f}（{評效等級}）** |
 {都更全案段}
 ---
-*RE-DCF-Tool v4.3｜圖說為真實依據｜逐層 §162 查核｜都更全案投報＝權利變換六大共負*
+*RE-DCF-Tool v4.4｜圖說為真實依據｜逐層 §162 查核｜都更全案投報＝權利變換六大共負*
 """
 
 
@@ -825,7 +835,7 @@ box-shadow:0 6px 28px -8px rgba(30,27,75,0.45);">
       <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
       backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
       color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
-        v4.3</span>
+        v4.4</span>
       <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
       backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
       color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
@@ -839,13 +849,17 @@ box-shadow:0 6px 28px -8px rgba(30,27,75,0.45);">
 </div>
 """, unsafe_allow_html=True)
 
-    # ── 上傳工具（折疊）──────────────────────────────────────────────────────
-    with st.expander("📤 上傳面積表 / 下載空白範本", expanded=False):
+    # ── 上傳工具（v4.4：預設展開，建築師優先從圖說面積表匯入）───────────────────
+    with st.expander("📤 匯入建築師面積表（Excel / CSV）", expanded=True):
         cimp1, cimp2 = st.columns([3, 2])
         with cimp1:
+            st.caption(
+                "支援建照/使照圖說格式 Excel 或 CSV。\n"
+                "自動辨識欄名：樓層／樓地板／計入容積／梯廳／安全梯（機電）／陽台。\n"
+                "欄名對不上時工具會留空，可在下方逐層表格手動補填。")
             上傳 = st.file_uploader(
-                "匯入 Excel/CSV 面積表", type=["xlsx", "xls", "csv"],
-                help="欄位：樓層/樓板/計容積/梯廳/安全梯/陽台，對不上的留空。")
+                "拖曳或選取面積表檔案", type=["xlsx", "xls", "csv"],
+                help="台灣建築師事務所常見欄位命名皆支援（含走廊梯廳、陽臺面積、防火梯等別名）")
             if 上傳 is not None and st.button("✅ 套用上傳的面積表"):
                 try:
                     df_up = 解析上傳(上傳)
@@ -855,11 +869,17 @@ box-shadow:0 6px 28px -8px rgba(30,27,75,0.45);">
                 except Exception as e:
                     st.error(f"解析失敗：{e}")
         with cimp2:
-            空白 = pd.DataFrame([dict(啟用=True, 樓層="1F", 樓板=0, 計容積=0, 梯廳=0, 安全梯=0, 陽台=0)])
-            st.download_button("⬇️ 下載空白匯入範本(CSV)",
-                               空白.to_csv(index=False).encode("utf-8-sig"),
-                               "面積表匯入範本.csv", "text/csv", use_container_width=True)
-            st.caption("取消「計入」勾選 = 排除該層（B1F 防空避難室 §117，踩坑5）")
+            # 範本含 B1F（預設取消計入）＋標準層示範，對應建築師面積表格式
+            範本列 = [
+                dict(啟用=False, 樓層="B1F（防空避難室§117）", 樓板=0, 計容積=0, 梯廳=0, 安全梯=0, 陽台=0),
+                dict(啟用=True,  樓層="1F",  樓板=0, 計容積=0, 梯廳=0, 安全梯=0, 陽台=0),
+                dict(啟用=True,  樓層="2F",  樓板=0, 計容積=0, 梯廳=0, 安全梯=0, 陽台=0),
+                dict(啟用=True,  樓層="標準層（複製此列）", 樓板=0, 計容積=0, 梯廳=0, 安全梯=0, 陽台=0),
+            ]
+            st.download_button("⬇️ 下載面積表範本（含說明）",
+                               pd.DataFrame(範本列).to_csv(index=False).encode("utf-8-sig"),
+                               "建築師面積表匯入範本.csv", "text/csv", use_container_width=True)
+            st.caption("B1F 防空避難室依 §117 預設不計入，請依圖說確認後再啟用")
 
     # ── §162 法規對照卡（v4.3：建築師反映連結性要高）──────────────────────────
     with st.expander("📐 建築技術規則 §162 三項免計——欄位對照", expanded=False):
@@ -1056,9 +1076,55 @@ B1F 防空避難室　▶ §117</div>
 
         st.divider()
 
+        # ── 建築師面積表核對格式（三項免計彙整，對應建築師送件格式）──────────────
         st.markdown(_section(
-            "逐層免計查核",
-            f"梯廳基準 {P['梯廳免計基準']}%　·　陽台基準 {P['陽台免計基準']}% 或 1/8 投影　·　L3"),
+            "三項免計核對表",
+            "對應建築師面積表 §162 查核欄　·　L3"),
+            unsafe_allow_html=True)
+        st.caption(
+            "此格式對應建築師申請建照/使照時的「容積計算說明」，可與圖說面積表逐行核對。")
+        梯廳免計合計 = sum(
+            min(float(f.get("梯廳") or 0), float(f.get("樓板") or 0) * P["梯廳免計基準"] / 100)
+            for f in 樓層records if f.get("啟用", True))
+        陽台免計合計 = 容["陽台免計面積"]
+        核對表 = pd.DataFrame([
+            {"免計項目": "① 梯廳（§162-1）",
+             "法規上限公式": f"各層樓板 × {P['梯廳免計基準']}%（逐層）",
+             "免計上限合計 m²": f"{sum(float(f.get('樓板') or 0) * P['梯廳免計基準'] / 100 for f in 樓層records if f.get('啟用', True)):.2f}",
+             "圖說實際 m²": f"{sum(float(f.get('梯廳') or 0) for f in 樓層records if f.get('啟用', True)):.2f}",
+             "免計採認 m²": f"{梯廳免計合計:.2f}",
+             "超出須補計 m²": f"{容['梯廳超出']:.2f}",
+             "狀態": "❌ 超出" if 容["梯廳超出"] > 0.01 else "✅ 合規"},
+            {"免計項目": "② 安全梯及機電（§162-1）",
+             "法規上限公式": "允建容積 × 15%（總量）",
+             "免計上限合計 m²": f"{容['安全梯上限']:.2f}",
+             "圖說實際 m²": f"{容['安全梯總量']:.2f}",
+             "免計採認 m²": f"{min(容['安全梯總量'], 容['安全梯上限']):.2f}",
+             "超出須補計 m²": f"{max(0, 容['安全梯總量'] - 容['安全梯上限']):.2f}",
+             "狀態": ("❌ 超出" if 容["安全梯總量"] > 容["安全梯上限"]
+                     else "✅ 合規")},
+            {"免計項目": f"③ 陽台（§162，{P['陽台免計基準']}% 法）",
+             "法規上限公式": f"各層樓板 × {P['陽台免計基準']}%（逐層）",
+             "免計上限合計 m²": f"{sum(float(f.get('樓板') or 0) * P['陽台免計基準'] / 100 for f in 樓層records if f.get('啟用', True)):.2f}",
+             "圖說實際 m²": f"{容['陽台總量']:.2f}",
+             "免計採認 m²": f"{陽台免計合計:.2f}",
+             "超出須補計 m²": f"{容['陽台超出']:.2f}",
+             "狀態": "❌ 超出" if 容["陽台超出"] > 0.01 else "✅ 合規"},
+        ])
+        st.dataframe(核對表, use_container_width=True, hide_index=True)
+        超出合計 = 容["梯廳超出"] + 容["陽台超出"] + max(0, 容["安全梯總量"] - 容["安全梯上限"])
+        if 超出合計 > 0.01:
+            st.error(
+                f"三項免計超出合計 **{超出合計:.2f} m²**，依 §162 須全數補計入容積（計入容積已自動加計）。"
+                "建議回建築師確認圖說設計是否需調整。")
+        else:
+            st.success("三項免計全數在法規上限內，無須補計。")
+
+        st.divider()
+
+        st.markdown(_section(
+            "逐層免計查核明細",
+            f"梯廳基準 {P['梯廳免計基準']}%　·　陽台基準 {P['陽台免計基準']}% 或 1/8 投影"),
             unsafe_allow_html=True)
         梯比 = P["梯廳免計基準"] / 100
         陽比 = P["陽台免計基準"] / 100
@@ -1315,14 +1381,16 @@ B1F 防空避難室　▶ §117</div>
                            edited.to_csv(index=False).encode("utf-8-sig"),
                            f"{P['案件名稱']}_逐層表.csv", "text/csv")
 
-    # ── 頁尾資訊列（v4.2）─────────────────────────────────────────────────────
+    # ── 頁尾資訊列（v4.4：加顯示部署版本時間，便於驗收確認）──────────────────────
+    import datetime as _dt
+    _build = "2026-06-20"  # 每次 commit 後更新此日期，部署後可從頁尾確認版本是否已更新
     st.markdown(
-        '<div style="margin-top:2rem;padding:13px 2px 4px;border-top:1px solid #E7E9F2;'
-        'display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;'
-        'font-size:11.5px;color:#9AA1B5">'
-        '<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.3</b>　永盛開發建設 前期評估</span>'
-        '<span>圖說為真　·　§162 逐層查核　·　都市更新權利變換實施辦法</span>'
-        '</div>', unsafe_allow_html=True)
+        f'<div style="margin-top:2rem;padding:13px 2px 4px;border-top:1px solid #E7E9F2;'
+        f'display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;'
+        f'font-size:11.5px;color:#9AA1B5">'
+        f'<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.4</b>　永盛開發建設 前期評估</span>'
+        f'<span style="color:#C9CEDB">build {_build}　·　圖說為真　·　§162 逐層查核　·　都市更新權利變換實施辦法</span>'
+        f'</div>', unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

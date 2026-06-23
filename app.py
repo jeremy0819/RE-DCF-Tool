@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-RE-DCF-Tool — 都更/危老前期評估工具（v4.5 模組化 + 容積獎勵拆解）
+RE-DCF-Tool — 都更/危老前期評估工具（v4.6 P1 權利變換基準 + 共負合理區間）
 ==============================================================
 永盛開發建設「建築坪效與前期評估」Excel 財務模型的程式化版本。
 執行：streamlit run app.py
 
-v4.5 更新（P0 模組化 + 容積獎勵拆解驗核）：
-  1.【架構】計算層移至 calc_engine.py，法規資料庫 law_db.py，UI 保留 app.py。
-  2.【獎勵率】由單一手動輸入改為各項拆解（都更 8 項 / 危老 6 項），自動加總。
-  3.【法規查核】check_bonus_limit() 驗證各項是否超出法規上限，超出立即顯示條文警示。
-  4.【案件類型】新增都更/危老切換，對應不同獎勵項目清單（law_db.py 統一管理）。
+v4.6 更新（P1 穩定現有資料）：
+  1.【共負查核】Tab ④ 新增共同負擔比合理區間警示（30%–65%，依案件模式自動對照）。
+  2.【更新前估值】Step 5 新增土地 + 建物現值輸入，calc_更新前價值() 計算基準。
+  3.【增值倍率】更新後地主分回市值 ÷ 更新前總值，一眼看穿都更創值效果。
 
-核心計算承襲 v3：陽台/梯廳超出皆「逐層」判斷（§162），
-已對齊安和/龜山/中正三案圖說。黃金測試：python test_golden.py
+v4.5（P0 模組化）：計算層 calc_engine.py、法規庫 law_db.py、獎勵拆解 8/6 項。
+核心計算承襲 v3：陽台/梯廳超出皆「逐層」判斷（§162），黃金測試：python test_golden.py
 """
 
 import streamlit as st
@@ -22,11 +21,12 @@ from calc_engine import (
     calc_容積查核, calc_坪效, calc_開發評效,
     calc_投報全案, calc_投報敏感度,
     calc_獎勵率合計, check_bonus_limit,
+    calc_更新前價值,
     平方米換坪, 樓層欄位,
     財務率預設, 範本參數, 範本樓層表, 範本案件類型, 範本獎勵拆解,
     解析上傳, 產生報告,
 )
-from law_db import BONUS_都更, BONUS_危老
+from law_db import BONUS_都更, BONUS_危老, COMMON_BURDEN_RANGES
 
 
 # ===========================================================================
@@ -494,6 +494,27 @@ border-radius:11px;padding:10px 14px 8px;margin-bottom:10px">
                 P["安置月數"] = st.number_input(
                     "安置月數", value=int(P.get("安置月數", 財務率預設["安置月數"])), step=1)
 
+        # Step 5 （P1）
+        with st.expander("Step 5  更新前估值（L7 權利變換基準）"):
+            st.caption(
+                "更新前土地 + 建物現值 = 權利變換計算基礎（都更條例 §56）。\n"
+                "填入後自動計算增值倍率與地主應分回估算。0 = 略過此試算。")
+            c1, c2 = st.columns(2)
+            P["地價"] = c1.number_input(
+                "土地市值（萬/坪）", value=float(P.get("地價", 0.0)), step=10.0,
+                help="建議：公告現值 × 1.2 倍 或 實際市場行情\n"
+                     "0 = 不進行更新前估值試算")
+            P["屋齡"] = c2.number_input(
+                "既有建物屋齡（年）", value=int(P.get("屋齡", 40)), step=1,
+                help="RC 造法定折舊率 2%/年；耐用年限 50 年後殘值為 0")
+            P["既有建物面積"] = c1.number_input(
+                "既有建物總面積 m²", value=float(P.get("既有建物面積", 0.0)), step=10.0,
+                help="現有建物各層樓地板面積合計（謄本或現況丈量）")
+            P["建物單價"] = c2.number_input(
+                "建物單價（萬/坪）", value=float(P.get("建物單價", 10.0)), step=1.0,
+                help="老屋折舊後單價，通常 5–15 萬/坪（RC 造）")
+            st.caption(f"折舊率固定 2%/年（RC 造），殘值率 = max(0, 1 − 2% × 屋齡)")
+
     # ── Hero 標題橫幅 ─────────────────────────────────────────────────────────
     st.markdown(f"""
 <div style="position:relative;overflow:hidden;
@@ -524,7 +545,7 @@ box-shadow:0 6px 28px -8px rgba(30,27,75,0.45);">
       <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
       backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
       color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
-        v4.5</span>
+        v4.6</span>
       <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
       backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
       color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
@@ -652,6 +673,13 @@ B1F 防空避難室　▶ §117</div>
               管銷費率=管銷費率, 建融成數=建融成數, 利率=利率, 年期=年期, 稅費率=稅費率)
     from calc_engine import calc_開發評效
     評 = calc_開發評效(坪["銷售坪數"], 成本)
+
+    # P1 更新前價值（有填地價才試算）
+    前值 = (calc_更新前價值(
+                P["基地面積"], P["地價"],
+                P.get("既有建物面積", 0.0), P.get("建物單價", 10.0),
+                int(P.get("屋齡", 40)))
+            if P.get("地價", 0) > 0 else None)
 
     # L6 投報：財務率預設 ← 各案覆寫；新增 土融土地成本 (v4.1)
     投報參數 = {**財務率預設,
@@ -1047,6 +1075,63 @@ B1F 防空避難室　▶ §117</div>
                     f"成數 {財務率預設['土融成數']:.0%} × 利率 {財務率預設['土融利率']:.1%} × "
                     f"年期 {財務率預設['土融年期']:.0f}年 = {明細['土融利息']:,.0f} 萬")
 
+        # ── P1 共同負擔比合理區間檢核 ────────────────────────────────────────
+        st.markdown(_section("共同負擔比合理區間", "P1 穩定性查核　·　law_db.py"), unsafe_allow_html=True)
+        _模式對應 = {"都更": "都更全案管理", "危老": "危老重建"}
+        _模式預設 = _模式對應.get(案件類型, "都更全案管理")
+        _模式 = st.selectbox(
+            "比較模式",
+            list(COMMON_BURDEN_RANGES.keys()),
+            index=list(COMMON_BURDEN_RANGES.keys()).index(_模式預設),
+            help="依案件性質選擇合理區間基準（法源：都市更新推動中心參考資料）",
+            key="共負模式"
+        )
+        _範圍 = COMMON_BURDEN_RANGES[_模式]
+        _共負比 = 投["共負比"]
+        _共負low, _共負high, _共負warn = _範圍["low"], _範圍["high"], _範圍["warn"]
+        _bar_pct = min(_共負比 / _共負warn, 1.0)
+        st.markdown(
+            f'<div style="background:#F8F9FB;border-radius:10px;padding:12px 16px;margin:4px 0">'
+            f'<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
+            f'<span style="font-size:12px;color:#6B7280">合理：{_共負low:.0%}–{_共負high:.0%}</span>'
+            f'<span style="font-size:12px;color:#6B7280">警示線：{_共負warn:.0%}</span>'
+            f'<span style="font-size:13px;font-weight:700;color:#1E293B">本案：{_共負比:.1%}</span>'
+            f'</div>'
+            f'<div style="height:8px;border-radius:4px;background:#E5E7EB;overflow:hidden">'
+            f'<div style="width:{_bar_pct*100:.0f}%;height:100%;border-radius:4px;'
+            f'background:{"#DC2626" if _共負比>_共負warn else "#F59E0B" if _共負比>_共負high else "#16A34A"}">'
+            f'</div></div></div>',
+            unsafe_allow_html=True
+        )
+        if _共負比 > _共負warn:
+            st.error(f"⚠️ 共負比 {_共負比:.1%} 超過警示線 {_共負warn:.0%}，地主接受度明顯降低。{_範圍['note']}")
+        elif _共負比 > _共負high:
+            st.warning(f"共負比 {_共負比:.1%} 偏高（合理區間上限 {_共負high:.0%}），建議重新檢視成本結構。")
+        else:
+            st.success(f"共負比 {_共負比:.1%} 在 {_模式} 合理區間 {_共負low:.0%}–{_共負high:.0%} 內。")
+
+        # ── P1 更新前估值 + 增值倍率 ──────────────────────────────────────────
+        if 前值 is not None:
+            st.markdown(_section("更新前估值 × 增值倍率", "L7 都更條例 §56 權利變換基準"),
+                        unsafe_allow_html=True)
+            _增值倍率 = 投["地主分回價值"] / 前值["更新前總值"] if 前值["更新前總值"] > 0 else 0
+            _c1, _c2, _c3 = st.columns(3)
+            _c1.metric("更新前總值", f"{前值['更新前總值']:,.0f} 萬",
+                       f"土地 {前值['土地現值']:,.0f} ＋ 建物 {前值['建物現值']:,.0f}")
+            _c2.metric("地主分回市值（更新後）", f"{投['地主分回價值']:,.0f} 萬",
+                       help="L6 總銷 − 共同負擔 = 地主分回市值")
+            _c3.metric("增值倍率", f"{_增值倍率:.2f}×",
+                       f"殘值率 {前值['建物殘值率']:.0%}（屋齡 {int(P.get('屋齡',40))} 年）")
+            st.caption(
+                f"建物殘值率 = 1 − 2% × {int(P.get('屋齡',40))} 年 = {前值['建物殘值率']:.0%}　｜　"
+                f"土地 {前值['基地坪']:.1f} 坪 × {P['地價']:.0f} 萬 = {前值['土地現值']:,.0f} 萬　｜　"
+                f"建物 {前值['建物坪']:.1f} 坪 × {P.get('建物單價',10):.0f} 萬 × {前值['建物殘值率']:.0%} = {前值['建物現值']:,.0f} 萬"
+            )
+            if _增值倍率 < 1.0:
+                st.warning("增值倍率 < 1.0：地主更新後市值低於更新前估值，請確認地價或共負結構。")
+            elif _增值倍率 >= 1.5:
+                st.success(f"增值倍率 {_增值倍率:.2f}×，地主更新效益顯著（建議向地主說明此數字）。")
+
         st.markdown(_section("報酬率敏感度", "住宅售價 × 營造單價"), unsafe_allow_html=True)
         sens = calc_投報敏感度(坪["銷售坪數"], _總營建坪, 投報參數)
         z = [[round(v * 100, 0) for v in 列] for 列 in sens["矩陣"]]
@@ -1071,12 +1156,12 @@ B1F 防空避難室　▶ §117</div>
                            f"{P['案件名稱']}_逐層表.csv", "text/csv")
 
     # ── 頁尾 ─────────────────────────────────────────────────────────────────
-    _build = "2026-06-22"
+    _build = "2026-06-23"
     st.markdown(
         f'<div style="margin-top:2rem;padding:13px 2px 4px;border-top:1px solid #E7E9F2;'
         f'display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;'
         f'font-size:11.5px;color:#9AA1B5">'
-        f'<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.5</b>　永盛開發建設 前期評估</span>'
+        f'<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.6</b>　永盛開發建設 前期評估</span>'
         f'<span style="color:#C9CEDB">build {_build}　·　圖說為真　·　§162 逐層查核　·　都市更新權利變換實施辦法</span>'
         f'</div>', unsafe_allow_html=True)
 

@@ -19,8 +19,8 @@ for 套件 in ["streamlit", "plotly", "plotly.graph_objects"]:
 # streamlit.column_config 屬性存取防呆
 sys.modules["streamlit"].column_config = types.SimpleNamespace()
 
-from app import (calc_容積查核, calc_坪效, calc_投報全案,   # noqa: E402
-                 範本參數, 範本樓層表, 財務率預設)
+from calc_engine import (calc_容積查核, calc_坪效, calc_投報全案,   # noqa: E402
+                         範本參數, 範本樓層表, 財務率預設)
 
 
 def 近似(a, b, 容差=0.5):

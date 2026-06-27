@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://re-dcf-core/schemas/project_schema.json",
+  "title": "Urban Renewal Project (RE-DCF Core 合約)",
+  "description": "RE-DCF Core Engine 對外唯一資料合約。Dashboard / Simulator / AI Copilot 一律消費此格式，不得自行重算公式。內部 domain 用中文，對外 key 用英文。",
+  "type": "object",
+  "required": ["schema_version", "project", "land", "building", "result"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "合約版本，破壞性變更時遞增"
+    },
+    "project": {
+      "type": "object",
+      "required": ["name", "renewal_type"],
+      "properties": {
+        "name": { "type": "string", "description": "案件名稱" },
+        "renewal_type": {
+          "type": "string",
+          "enum": ["urban_renewal", "danger_building"],
+          "description": "都更 urban_renewal / 危老 danger_building"
+        }
+      }
+    },
+    "land": {
+      "type": "object",
+      "required": ["site_area_sqm", "far"],
+      "properties": {
+        "site_area_sqm":    { "type": "number", "description": "基地面積（使照面積，m²）" },
+        "plaza_area_sqm":   { "type": "number", "description": "人行廣場退縮（m²）" },
+        "far":              { "type": "number", "description": "法定容積率" },
+        "bonus_ratio":      { "type": "number", "description": "容積獎勵率合計（各項自動加總）" },
+        "bonus_breakdown":  { "type": "object", "description": "獎勵拆解明細 {項目key: 比率}" },
+        "tdr_transfer_sqm": { "type": "number", "description": "容積移轉（m²）" }
+      }
+    },
+    "building": {
+      "type": "object",
+      "properties": {
+        "public_ratio":          { "type": "number", "description": "公設比" },
+        "stair_hall_exempt_pct": { "type": "number", "description": "梯廳免計基準（5 或 8）" },
+        "balcony_exempt_pct":    { "type": "number", "description": "陽台免計基準（10 或 15）" },
+        "unit_count":            { "type": "integer", "description": "戶數" }
+      }
+    },
+    "owners": {
+      "type": "array",
+      "description": "地主清冊（vNext P1 權利變換用，目前可空）",
+      "items": { "type": "object" }
+    },
+    "finance": {
+      "type": "object",
+      "properties": {
+        "residential_price":  { "type": "number", "description": "住宅單價（萬/坪）" },
+        "shop_area":          { "type": "number", "description": "店舖坪數" },
+        "shop_price":         { "type": "number", "description": "店舖單價（萬/坪）" },
+        "parking_count":      { "type": "integer", "description": "車位數" },
+        "parking_price":      { "type": "number", "description": "車位單價（萬/位）" },
+        "construction_price": { "type": "number", "description": "營造單價（萬/坪）" }
+      }
+    },
+    "result": {
+      "type": "object",
+      "description": "RE-DCF Core 計算結果（唯一可信數值來源）",
+      "required": [
+        "baseline_far", "allow_floor_area", "used_floor_area",
+        "remaining_floor_area", "saleable_area", "efficiency_ratio"
+      ],
+      "properties": {
+        "baseline_far":         { "type": "number", "description": "基準容積 FA（m²）" },
+        "allow_floor_area":     { "type": "number", "description": "允建容積（m²）" },
+        "used_floor_area":      { "type": "number", "description": "計入容積_修正後（m²）" },
+        "remaining_floor_area": { "type": "number", "description": "容積餘量（m²，負值=超出）" },
+        "stair_exempt_cap":     { "type": "number", "description": "安全梯免計上限（允建×15%）" },
+        "balcony_exempt_area":  { "type": "number", "description": "陽台免計面積（m²）" },
+        "saleable_area":        { "type": "number", "description": "銷售坪數" },
+        "efficiency_ratio":     { "type": "number", "description": "銷坪比（正常 1.58–1.68）" },
+        "total_sales":          { "type": "number", "description": "總銷（萬元）" },
+        "shared_cost":          { "type": "number", "description": "共同負擔合計（萬元）" },
+        "shared_cost_ratio":    { "type": "number", "description": "共負比" },
+        "owner_return_value":   { "type": "number", "description": "地主分回價值（萬元）" },
+        "owner_return_ratio":   { "type": "number", "description": "地主分回比" },
+        "return_rate":          { "type": "number", "description": "報酬率（利潤/總成本）" },
+        "pre_renewal_value":    { "type": "number", "description": "更新前總值（萬元，L7）" },
+        "value_multiple":       { "type": "number", "description": "增值倍率（地主分回 / 更新前總值）" }
+      }
+    }
+  }
+}

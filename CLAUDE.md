@@ -35,12 +35,30 @@ Windows 快速啟動：`啟動工具.bat`（呼叫 `streamlit run app.py`）。
 
 ## 檔案清單
 
+> ⚠️ **v4.7 起架構重構**（見 ROADMAP.md）：計算公式全部搬入 `core/` package（Urban Renewal
+> Core Engine）。`app.py` 僅 UI / Demo。`calc_engine.py` 降為相容 shim（`from core import *`），
+> 既有 import 不變。本文件下方「函式目錄」的行號為 v4.6 舊版佈局，函式實作位置改見 `core/`。
+
 ```
 RE-DCF-Tool/
-├── app.py                        # 主程式（848 行）：計算層 + UI 層
-├── test_golden.py                # 黃金迴歸測試（3 案例 + L6 投報）
+├── core/                         # ★ 計算核心（唯一公式來源，Single Source of Truth）
+│   ├── __init__.py               #   re-export 全部公開介面（__all__）
+│   ├── capacity.py               #   容積查核 + 獎勵驗核（L2–L4）
+│   ├── efficiency.py             #   銷售坪效 + 開發評效（L4.5–L5）
+│   ├── finance.py                #   都更全案投報六大共負（L6）
+│   ├── valuation.py              #   更新前價值估算（L7）
+│   ├── contract.py               #   對外 Project JSON 合約（中文 calc → 英文 key）
+│   ├── templates.py              #   範本案件種子資料（demo/測試）
+│   └── io.py                     #   Excel/CSV 解析 + Markdown 報告
+├── schemas/project_schema.json   # ★ 對外合約 JSON Schema（draft-07）
+├── calc_engine.py                # 相容 shim（DEPRECATED；新程式請 from core import …）
+├── law_db.py                     # 法規庫（→ 未來 regulation/ 分縣市）
+├── app.py                        # 主程式：純 UI / Demo（不含計算邏輯）
+├── test_golden.py                # 黃金迴歸測試（4 案 + JSON 合約驗證）
 ├── make_template.py              # 產生 Excel 對照範本
-├── requirements.txt              # 四個依賴套件
+├── generate_report.py            # 產生專案 Word 報告（python-docx）
+├── ROADMAP.md / CHANGELOG.md     # vNext 路線圖 / 版本變更紀錄
+├── requirements.txt              # 部署依賴套件
 ├── 都更全案投報_對照範本.xlsx       # make_template.py 的輸出（可分享給建築師）
 ├── 啟動工具.bat                   # Windows 捷徑
 ├── CLAUDE.md                     # 本文件（AI 助理規格）
@@ -51,6 +69,9 @@ RE-DCF-Tool/
 ├── .gitignore                    # 排除 供py/（真實財務資料）、__pycache__
 └── 供py/                         # ⚠️ .gitignore 排除，不可上傳：真實案件 Excel
 ```
+
+**命名慣例（v4.7 拍板）**：內部 domain 函式/變數用中文（`calc_容積查核`）；
+對外 JSON 合約 key 用英文（`allow_floor_area`）。分界點＝ `core/contract.py`。
 
 ---
 

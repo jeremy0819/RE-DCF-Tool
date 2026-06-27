@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-RE-DCF-Tool — 都更/危老前期評估工具（v4.6 P1 權利變換基準 + 共負合理區間）
+RE-DCF-Tool — 都更/危老前期評估工具（v4.7 Core Engine 重構 + JSON 合約）
 ==============================================================
 永盛開發建設「建築坪效與前期評估」Excel 財務模型的程式化版本。
+本檔僅為 UI（Demo）；所有計算公式來自 core/ package（Urban Renewal Core Engine）。
 執行：streamlit run app.py
 
-v4.6 更新（P1 穩定現有資料）：
-  1.【共負查核】Tab ④ 新增共同負擔比合理區間警示（30%–65%，依案件模式自動對照）。
-  2.【更新前估值】Step 5 新增土地 + 建物現值輸入，calc_更新前價值() 計算基準。
-  3.【增值倍率】更新後地主分回市值 ÷ 更新前總值，一眼看穿都更創值效果。
+v4.7 更新（vNext Sprint 1：Core 化）：
+  1.【模組拆分】計算層搬入 core/（capacity/efficiency/finance/valuation）；
+     calc_engine.py 降為相容 shim，app.py 與測試 import 不變。
+  2.【JSON 合約】新增 core/contract.py + schemas/project_schema.json；
+     內部 domain 用中文、對外 key 用英文（allow_floor_area…），跨 App 唯一資料格式。
+  3.【匯出】Tab ⑤ 新增「下載案件 JSON」，供都更儀表板 / AI 消費，不得自行重算。
 
+v4.6（P1 穩定現有資料）：共負合理區間警示、更新前估值、增值倍率。
 v4.5（P0 模組化）：計算層 calc_engine.py、法規庫 law_db.py、獎勵拆解 8/6 項。
 核心計算承襲 v3：陽台/梯廳超出皆「逐層」判斷（§162），黃金測試：python test_golden.py
 """
 
+import json
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -21,7 +26,7 @@ from calc_engine import (
     calc_容積查核, calc_坪效, calc_開發評效,
     calc_投報全案, calc_投報敏感度,
     calc_獎勵率合計, check_bonus_limit,
-    calc_更新前價值,
+    calc_更新前價值, build_project_json,
     平方米換坪, 樓層欄位,
     財務率預設, 範本參數, 範本樓層表, 範本案件類型, 範本獎勵拆解,
     解析上傳, 產生報告,
@@ -545,7 +550,7 @@ box-shadow:0 6px 28px -8px rgba(30,27,75,0.45);">
       <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
       backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
       color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
-        v4.6</span>
+        v4.7</span>
       <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
       backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
       color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
@@ -1155,13 +1160,31 @@ B1F 防空避難室　▶ §117</div>
                            edited.to_csv(index=False).encode("utf-8-sig"),
                            f"{P['案件名稱']}_逐層表.csv", "text/csv")
 
+        # ── 案件 JSON 合約（RE-DCF Core 對外唯一資料格式）──
+        st.divider()
+        st.markdown("**🔗 案件 JSON（Core 合約）**")
+        st.caption("RE-DCF Core Engine 的對外標準格式（英文 key）。"
+                   "供 都更儀表板 / Simulator / AI Copilot 消費——所有數值只由 Core 計算，"
+                   "消費端不得自行重算公式。Schema 見 schemas/project_schema.json。")
+        案件JSON = build_project_json(
+            P, 容, 坪, 投, 前值,
+            案件類型=st.session_state.get("案件類型", "都更"),
+            獎勵拆解=st.session_state.get("獎勵拆解", {}),
+        )
+        st.download_button(
+            "⬇️ 下載案件 JSON",
+            json.dumps(案件JSON, ensure_ascii=False, indent=2).encode("utf-8"),
+            f"{P['案件名稱']}_case.json", "application/json")
+        with st.expander("預覽 JSON 合約"):
+            st.json(案件JSON)
+
     # ── 頁尾 ─────────────────────────────────────────────────────────────────
-    _build = "2026-06-23"
+    _build = "2026-06-27"
     st.markdown(
         f'<div style="margin-top:2rem;padding:13px 2px 4px;border-top:1px solid #E7E9F2;'
         f'display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;'
         f'font-size:11.5px;color:#9AA1B5">'
-        f'<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.6</b>　永盛開發建設 前期評估</span>'
+        f'<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.7</b>　永盛開發建設 前期評估</span>'
         f'<span style="color:#C9CEDB">build {_build}　·　圖說為真　·　§162 逐層查核　·　都市更新權利變換實施辦法</span>'
         f'</div>', unsafe_allow_html=True)
 

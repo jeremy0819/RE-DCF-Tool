@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-RE-DCF-Tool — 都更/危老前期評估工具（v4.7 Core Engine 重構 + JSON 合約）
+RE-DCF-Tool — 都更/危老前期評估工具（v4.8 L6 財務層真實案校準 + 三模式）
 ==============================================================
 永盛開發建設「建築坪效與前期評估」Excel 財務模型的程式化版本。
 本檔僅為 UI（Demo）；所有計算公式來自 core/ package（Urban Renewal Core Engine）。
 執行：streamlit run app.py
+
+v4.8 更新（L6 財務層重構）：
+  1.【營造基準】改用「總樓地板面積(含地下室)」，修正舊「允建坪」低估營造約一半的踩坑。
+  2.【三模式】全案管理／合建／買賣；土地成本、全案管理費、權變費依模式計入。
+  3.【新科目】補代銷費、信託+公共基金；設計費率由假設 5% 修正為實際 ~1.4%。
+  4.【真實校準】以竹蓮段(危老在建)、安民街(權變審議)實際數據鎖 L6 黃金測試（±5%）。
 
 v4.7 更新（vNext Sprint 1：Core 化）：
   1.【模組拆分】計算層搬入 core/（capacity/efficiency/finance/valuation）；
@@ -447,7 +453,12 @@ border-radius:11px;padding:10px 14px 8px;margin-bottom:10px">
 
         # Step 4
         with st.expander("Step 4  都更全案投報（L6）"):
-            st.caption("對應建築師 Excel「坪效及獲利分析」\n費率基數：代銷/稅 → 總銷，設計/工管 → 營造費，管維 → 工程費A")
+            st.caption("對應建築師 Excel「坪效及獲利分析」\n費率基數：代銷/稅 → 總銷，設計 → 營造費，管維 → 工程費A")
+            投報模式 = st.radio(
+                "投報模式", ["全案管理", "合建", "買賣"], horizontal=True,
+                index=0 if 案件類型 == "都更" else 1,
+                help="全案管理：地主自持土地，土地成本不計共負、另收全案管理費（權變）\n"
+                     "合建／買賣：土地為成本計入總成本，不收全案管理費")
             c1, c2 = st.columns(2)
             P["住宅單價"] = c1.number_input(
                 "住宅單價（萬/坪）", value=float(P.get("住宅單價", 80.0)), step=1.0)
@@ -463,12 +474,13 @@ border-radius:11px;padding:10px 14px 8px;margin-bottom:10px">
                 "都更營造單價（萬/坪）", value=float(P.get("營造單價", 22.0)), step=0.5,
                 help="含工程費A；基礎→結構→裝修各期，施工困難基地上調")
             P["戶數"] = c1.number_input("戶數", value=int(P.get("戶數", 0)), step=1)
-            P["總營建坪"] = c2.number_input(
-                "總營建坪", value=float(P.get("總營建坪", 0.0)), step=10.0,
-                help="填圖說總樓地板坪（非銷售坪！方法論 §6 第六項）；0 = 允建坪×2 粗估")
+            P["權變戶數"] = c2.number_input(
+                "權變戶數（拆補基準）", value=int(P.get("財務覆寫", {}).get("權變戶數", P.get("戶數", 0))),
+                step=1, help="既有地主戶數（拆遷/租金補償基準），非總銷售戶數；合建分屋可填 0")
             P["土融土地成本"] = c1.number_input(
-                "土融土地成本（萬）", value=float(P.get("土融土地成本", 0.0)), step=1000.0,
-                help="全案管理（地主自持）填 0；合建/買賣案填入土地取得成本，納入 D 土融利息計算")
+                "土地成本（萬）", value=float(P.get("土融土地成本", 0.0)), step=1000.0,
+                help="全案管理（地主自持）填 0；合建/買賣填土地取得成本，計入共負 G 科目與土融利息")
+            st.caption("💡 營造基準已自動採「總樓地板面積（含地下室）」= 逐層表加總，不需手填")
             with st.expander("⚙️ 進階成本率（預設＝安和段送審值）"):
                 cc1, cc2 = st.columns(2)
                 P["管理費率"] = cc1.number_input(
@@ -550,7 +562,7 @@ box-shadow:0 6px 28px -8px rgba(30,27,75,0.45);">
       <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
       backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
       color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
-        v4.7</span>
+        v4.8</span>
       <span style="background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.28);
       backdrop-filter:blur(4px);border-radius:999px;padding:4px 14px;
       color:rgba(255,255,255,0.95);font-size:11.5px;font-weight:600;white-space:nowrap;">
@@ -686,15 +698,18 @@ B1F 防空避難室　▶ §117</div>
                 int(P.get("屋齡", 40)))
             if P.get("地價", 0) > 0 else None)
 
-    # L6 投報：財務率預設 ← 各案覆寫；新增 土融土地成本 (v4.1)
+    # L6 投報：財務率預設 ← 各案覆寫 ← 財務覆寫（各案實際費率）；土地成本供合建/買賣模式
     投報參數 = {**財務率預設,
               **{k: P[k] for k in ("住宅單價", "店舖坪數", "店舖單價", "車位數", "車位單價",
-                                   "營造單價", "設計監造率", "工程管理率", "管維率", "權變作業率",
-                                   "拆補每戶", "月租金每戶", "安置月數", "管理費率", "營業稅率", "戶數")
+                                   "營造單價", "設計規劃率", "設計監造率", "工程管理率", "管維率",
+                                   "權變作業率", "拆補每戶", "月租金每戶", "安置月數", "管理費率",
+                                   "營業稅率", "代銷費率", "信託費率", "權變戶數", "戶數")
                  if k in P},
-              "土地成本": float(P.get("土融土地成本", 0.0))}
-    _總營建坪 = float(P.get("總營建坪", 0.0) or 0.0) or (坪["允建容積坪"] * 2.0)
-    投 = calc_投報全案(坪["銷售坪數"], _總營建坪, 投報參數)
+              "土地成本": float(P.get("土融土地成本", 0.0)),
+              **P.get("財務覆寫", {})}
+    # 營造基準＝總樓地板面積(含地下室)；踩坑：用允建坪會低估營造成本約一半
+    _總營建坪 = 容["總樓地板面積"] / 平方米換坪
+    投 = calc_投報全案(坪["銷售坪數"], _總營建坪, 投報參數, 投報模式)
 
     # ── L2→L6 計算流程帶 + 結論橫幅 ────────────────────────────────────────
     餘量 = 容["容積餘量"]
@@ -1138,7 +1153,7 @@ B1F 防空避難室　▶ §117</div>
                 st.success(f"增值倍率 {_增值倍率:.2f}×，地主更新效益顯著（建議向地主說明此數字）。")
 
         st.markdown(_section("報酬率敏感度", "住宅售價 × 營造單價"), unsafe_allow_html=True)
-        sens = calc_投報敏感度(坪["銷售坪數"], _總營建坪, 投報參數)
+        sens = calc_投報敏感度(坪["銷售坪數"], _總營建坪, 投報參數, 投報模式)
         z = [[round(v * 100, 0) for v in 列] for 列 in sens["矩陣"]]
         heat = go.Figure(go.Heatmap(
             z=z,
@@ -1179,12 +1194,12 @@ B1F 防空避難室　▶ §117</div>
             st.json(案件JSON)
 
     # ── 頁尾 ─────────────────────────────────────────────────────────────────
-    _build = "2026-06-27"
+    _build = "2026-06-28"
     st.markdown(
         f'<div style="margin-top:2rem;padding:13px 2px 4px;border-top:1px solid #E7E9F2;'
         f'display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;'
         f'font-size:11.5px;color:#9AA1B5">'
-        f'<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.7</b>　永盛開發建設 前期評估</span>'
+        f'<span>🏗️ <b style="color:#6B7280">RE-DCF-Tool v4.8</b>　永盛開發建設 前期評估</span>'
         f'<span style="color:#C9CEDB">build {_build}　·　圖說為真　·　§162 逐層查核　·　都市更新權利變換實施辦法</span>'
         f'</div>', unsafe_allow_html=True)
 

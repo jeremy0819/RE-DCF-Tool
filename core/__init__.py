@@ -31,7 +31,7 @@ from core.contract import (
     SCHEMA_VERSION, build_result_json, build_project_json,
 )
 from core.templates import (
-    範本參數, 範本案件類型, 範本獎勵拆解, 範本樓層表,
+    範本參數, 範本案件類型, 範本獎勵拆解, 範本樓層表, 範本模式,
 )
 from core.io import 解析上傳, 產生報告
 
@@ -50,6 +50,6 @@ __all__ = [
     # 合約
     "SCHEMA_VERSION", "build_result_json", "build_project_json",
     # 範本 + I/O
-    "範本參數", "範本案件類型", "範本獎勵拆解", "範本樓層表",
+    "範本參數", "範本案件類型", "範本獎勵拆解", "範本樓層表", "範本模式",
     "解析上傳", "產生報告",
 ]

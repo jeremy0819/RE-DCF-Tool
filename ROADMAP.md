@@ -84,6 +84,61 @@ re-dcf-core/
 
 ---
 
+## 版本路徑（v5 – v7）
+
+> 現況 v4.9（Core 合約 v1.1）。以下把 P1–P3 剩餘項目對應到版本號，依**相依順序**排列——
+> 後面版本的工作大多卡在前面版本先做完（例如 IRR 需要 owners[] 先有真實分回數字才能校準）。
+
+### v5 — Domain Model 補完（owners[] 真正可用）
+> 對應 P1 + P0 剩餘的 `models/`。目標：owners[] 從「合成範例」變成能吃真實清冊、算出逐戶分回。
+
+| 項目 | 說明 | 前置 |
+|---|---|---|
+| owners[] 輸入 UI | Step 5/6 新增地主清冊 CSV 匯入（比照現有逐層表模式） | 無，可立即做 |
+| `models/`：Domain Model 類別 | project / building / owner，取代目前散落各處的 dict 傳遞 | 無，可與上一項並行 |
+| `calc_更新前價值()` 補強 | 加路寬 / 使用分區 / 建物型態係數，目前是基礎版 | 無 |
+| `calc_rights_exchange()` | 更新前價值 → 權值比例 → 分回，填 owners[].`return_value` | owners[] 輸入 UI |
+| `calc_compensation()` | 找補金，填 owners[].`equalization` | `calc_rights_exchange()` |
+| **黃金測試** | 用竹蓮/安民真實案校準逐戶分回（若無真清冊，先用合成資料鎖回歸，標記待真實驗證） | 待你提供真實清冊，否則沿用合成範例 |
+
+**卡點**：目前沒有任何一案的真實地主清冊（土地持分、逐戶更新前建物面積）。UI 和函式可以先用合成資料做完，但要「真的算對」需要你提供至少一案的真實清冊。
+
+### v6 — 財務引擎深化 + 法規資料庫
+> 對應 P1 剩餘的現金流模組 + P2。目標：從「單期報酬率」補到「分期現金流＋分縣市法規」。
+
+| 項目 | 說明 | 前置 |
+|---|---|---|
+| `calc_cashflow()` | 分期現金流（規劃→基礎→結構→裝修→交屋），竹蓮段 Excel 已有 `全案現金流量表`／`預估現金流量表(永盛/英奇)`／`請款紀錄` 三張表可校準 | 無，資料已在手 |
+| `calc_irr()` / `calc_npv()` | 建在 `calc_cashflow()` 的分期現金流之上 | `calc_cashflow()` |
+| Loan Engine | 建融/土融改分期攤還排程，取代目前 D 貸款利息的單期簡化算法 | `calc_cashflow()` |
+| Sensitivity 擴充 | 現有售價×營造雙軸熱力圖，擴充到 IRR/NPV 維度 | `calc_irr()`/`calc_npv()` |
+| `regulation/` 分縣市 | 拆 `law_db.py` → `regulation/{taipei,newtaipei,taoyuan,...}/`，每條規則附條文/上限/來源/更新日期 | 無，可與財務引擎並行 |
+| `knowledge/` 骨架 | 法規知識庫（都市更新/危老/估價/土地法/建築技術規則），供未來 AI 引用 | 無 |
+| Monte Carlo | 售價/成本常態分佈模擬，竹蓮段 Excel 已有雛形分頁可參考 | `calc_irr()` |
+
+**卡點**：竹蓮段的三張現金流分頁我已讀過但還沒建模；`regulation/` 分縣市需要你確認除了目前默認值以外，還要建哪些縣市（目前只有一般性 §162／都更容獎／危老 §6，未分縣市差異）。
+
+### v7 — 對外介面 + Urban-Renewal Phase 2
+> 對應 P3。目標：Core 從「這個 repo 裡的 package」變成「任何人都能呼叫的服務」。
+
+| 項目 | 說明 | 前置 |
+|---|---|---|
+| Python Package（`redcf-core`） | 把 `core/` 抽成獨立可 pip install 的套件，`app.py` 與其他消費端改用套件而非相對 import | v5+v6 的公式都要先穩定 |
+| FastAPI | 對外 HTTP 端點，`POST /calc` 吃 Project JSON（不含 result）→ 回傳完整結果 | Python Package |
+| JSON API / CLI | 命令列版本（`redcf-core calc case.json`），方便 CI/批次跑 | Python Package |
+| **Urban-Renewal Phase 2** | 雙向資料流：他們的權利人真實資料 → 呼叫 FastAPI 端點 → 回算權利變換 | FastAPI + v5 的 `calc_rights_exchange()` |
+
+**卡點**：這一步之前 ROADMAP 就寫「Core 穩定後才做」——實務上就是等 v5、v6 的公式都經過真實案驗證，不要在公式還會變動時就開對外服務，否則消費端會一直被破壞性變更打到。
+
+---
+
+## 不在 v5–v7 範圍內（明確排除）
+
+- **商辦版**（NOI + Cap Rate + 持有期報酬）：CLAUDE.md 已註記「住宅工具上線後，複製架構做商辦版，另開對話處理」——這是平行的產品線，不是這條 roadmap 的延伸，不占用 v5–v7 的版本號。
+- **AI Copilot**：ROADMAP 開發原則第 4 條「Domain Model 優先於 AI」——v5–v7 都是 Domain Model／Core，AI 層要等這些穩定才開始，且會是另一個 repo（消費 Core 的 JSON，不重算）。
+
+---
+
 ## 與 Urban-Renewal Dashboard 的關係
 
 ```

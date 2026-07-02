@@ -85,13 +85,24 @@ def 測試合約():
     投 = calc_投報全案(坪["銷售坪數"], 容["總樓地板面積"] / 3.3058, p, 範本模式[鍵])
     前 = calc_更新前價值(P["基地面積"], 52.0, 既有建物面積=2000.0, 建物單價=10.0, 屋齡=40)
 
-    proj = build_project_json(P, 容, 坪, 投, 前,
-                              案件類型=範本案件類型[鍵], 獎勵拆解=範本獎勵拆解[鍵])
-    r = proj["result"]
+    # owners：一組故意持分加總偏離 1（0.9）的測資，驗證一致性自檢會抓到
+    owners_bad = [
+        {"owner_id": "T01", "land_share": 0.5, "pre_building_area_sqm": 0,
+         "pre_value": 1000.0, "consent": "agreed"},
+        {"owner_id": "T02", "land_share": 0.4, "pre_building_area_sqm": 0,
+         "pre_value": 1000.0, "consent": "pending"},
+    ]
 
-    print("\n=== vNext Project JSON 合約 ===")
+    proj = build_project_json(P, 容, 坪, 投, 前,
+                              案件類型=範本案件類型[鍵], 獎勵拆解=範本獎勵拆解[鍵],
+                              投報模式=範本模式[鍵], owners=owners_bad,
+                              computed_at="2026-07-01T00:00:00+00:00")
+    r = proj["result"]
+    碼集 = {w["code"] for w in r["warnings"]}
+
+    print("\n=== vNext Project JSON 合約（schema v1.1） ===")
     檢查 = [
-        ("schema_version", proj["schema_version"] == "1.0"),
+        ("schema_version=1.1", proj["schema_version"] == "1.1"),
         ("renewal_type=urban_renewal", proj["project"]["renewal_type"] == "urban_renewal"),
         ("allow_floor_area≈4167", 近似(r["allow_floor_area"], 4167.08, 0.5)),
         ("used_floor_area≈4198.75", 近似(r["used_floor_area"], 4198.75, 0.5)),
@@ -99,6 +110,14 @@ def 測試合約():
         ("shared_cost_ratio 合理(0–1)", 0 < r["shared_cost_ratio"] < 1),
         ("pre_renewal_value 存在", "pre_renewal_value" in r),
         ("value_multiple 存在", "value_multiple" in r),
+        # v1.1 新欄位
+        ("computed_at 原樣傳遞", r["computed_at"] == "2026-07-01T00:00:00+00:00"),
+        ("core_version 存在", isinstance(r.get("core_version"), str) and len(r["core_version"]) > 0),
+        # warnings：中正段容積餘量為負（-31.67）必須抓到 VOLUME_EXCEEDED
+        ("warnings 含 VOLUME_EXCEEDED", "VOLUME_EXCEEDED" in 碼集),
+        # owners_bad 的 land_share 合計=0.9（偏離1超過3%容差）必須抓到
+        ("warnings 含 OWNERS_SHARE_MISMATCH", "OWNERS_SHARE_MISMATCH" in 碼集),
+        ("owners 陣列原樣輸出 2 筆", len(proj["owners"]) == 2),
     ]
     合約過 = all(ok for _, ok in 檢查)
     for 名, ok in 檢查:

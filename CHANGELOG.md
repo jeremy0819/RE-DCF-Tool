@@ -4,6 +4,37 @@
 
 ---
 
+## v4.9 — 2026-07-01　Core 合約 v1.1（回應 Urban-Renewal 介面對齊回覆）
+
+**背景**：Urban-Renewal（都更儀表板，純前端靜態站）完成 Phase 1 對接後回覆介面對齊備忘錄，
+提出 owners[]／warnings[]／computed_at／core_version 四項規格建議。本版逐項落地。
+
+**新增（合約 schema_version 1.0 → 1.1，向下相容，純新增欄位）**
+- `core/contract.py`：新增 `_build_warnings()` 統一健檢判斷（Core 算、消費端只讀不重判）：
+  `EFFICIENCY_OUT_OF_BAND`／`VOLUME_EXCEEDED`／`SHARED_COST_HIGH`／`SHARED_COST_LOW`／
+  `VALUE_MULTIPLE_LOW`，共負門檻讀 `law_db.COMMON_BURDEN_RANGES`（依案件類型＋投報模式對照）。
+- `owners[]`：地主清冊規格定案（`owner_id`／`land_share`／`pre_building_area_sqm`／
+  `pre_value`／`consent`／`min_unit_eligible`／`return_value`／`equalization`／
+  `selected_units`），規格由 Urban-Renewal 提出。新增 `_validate_owners()` 一致性自檢
+  （Σ land_share≈1、Σ pre_value≈`result.pre_renewal_value`，容差 3%），偏離時附加
+  `OWNERS_SHARE_MISMATCH`／`OWNERS_VALUE_MISMATCH` warning。
+- `result.computed_at`（ISO 8601 UTC）／`result.core_version`：可追溯結果算於何時、哪版公式。
+- `core/_version.py`：新增 `CORE_VERSION` 常數，獨立於 app.py 的 UI 版本號（不同軸線）。
+
+**交付**
+- `schemas/examples/`：4 個可重現的合約範例 JSON（危老合建／都更全案管理／都更防災+容積超出／
+  含 owners 的合成範例），供 Urban-Renewal 壓測用；`generate_examples.py` 一鍵重產生。
+- app.py Tab⑤ 新增 warnings 即時顯示（🔴/🟡/🔵），JSON 匯出時 `owners=[]`（尚無清冊輸入 UI，
+  P1 待真實資料）。
+
+**測試**：`test_golden.py` 新增 owners 一致性自檢測試（故意偏離 10% 持分，驗證抓到
+`OWNERS_SHARE_MISMATCH`）與 `VOLUME_EXCEEDED` warning 斷言（中正段已知容積超出）。
+
+**版本號 DRY 化**：app.py 散落 4 處的 `v4.x` 字串問題（見 v4.6 專案報告已知問題）尚未完全解決，
+本版僅統一改字串內容，未來再抽成單一常數。
+
+---
+
 ## v4.8 — 2026-06-28　L6 財務層真實案校準 + 三模式
 
 **重構（財務層）**

@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.1",
+  "project": {
+    "name": "竹蓮段",
+    "renewal_type": "danger_building"
+  },
+  "land": {
+    "site_area_sqm": 1541.0,
+    "plaza_area_sqm": 0.0,
+    "far": 2.4,
+    "bonus_ratio": 0.4,
+    "bonus_breakdown": {
+      "時程": 0.3,
+      "規模": 0.08,
+      "基本": 0.02
+    },
+    "tdr_transfer_sqm": 1109.52
+  },
+  "building": {
+    "public_ratio": 0.34,
+    "stair_hall_exempt_pct": 5,
+    "balcony_exempt_pct": 10,
+    "unit_count": 48
+  },
+  "owners": [],
+  "finance": {
+    "residential_price": 67.0,
+    "shop_area": 93.23,
+    "shop_price": 100.5,
+    "parking_count": 79,
+    "parking_price": 230.0,
+    "construction_price": 20.0
+  },
+  "result": {
+    "baseline_far": 3698.4,
+    "allow_floor_area": 6287.28,
+    "used_floor_area": 6324.98,
+    "remaining_floor_area": -37.7,
+    "stair_exempt_cap": 943.09,
+    "balcony_exempt_area": 696.67,
+    "saleable_area": 3232.97,
+    "efficiency_ratio": 1.7,
+    "total_sales": 237902.0,
+    "shared_cost": 153608.0,
+    "shared_cost_ratio": 0.6457,
+    "owner_return_value": 84294.0,
+    "owner_return_ratio": 0.3543,
+    "return_rate": 0.5488,
+    "pre_renewal_value": 37292.0,
+    "value_multiple": 2.26,
+    "warnings": [
+      {
+        "code": "EFFICIENCY_OUT_OF_BAND",
+        "level": "warn",
+        "message": "銷坪比 1.700 不在正常帶 1.58–1.68",
+        "field": "efficiency_ratio"
+      },
+      {
+        "code": "VOLUME_EXCEEDED",
+        "level": "error",
+        "message": "容積超出允建 37.70 m²，需調整設計",
+        "field": "remaining_floor_area"
+      },
+      {
+        "code": "SHARED_COST_HIGH",
+        "level": "error",
+        "message": "共負比 64.6% 超過警示線 60%，地主接受度明顯降低",
+        "field": "shared_cost_ratio"
+      }
+    ],
+    "computed_at": "2026-07-01T00:00:00+00:00",
+    "core_version": "0.2.0"
+  }
+}

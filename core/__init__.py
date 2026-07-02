@@ -30,6 +30,7 @@ from core.valuation import calc_更新前價值
 from core.contract import (
     SCHEMA_VERSION, build_result_json, build_project_json,
 )
+from core._version import CORE_VERSION
 from core.templates import (
     範本參數, 範本案件類型, 範本獎勵拆解, 範本樓層表, 範本模式,
 )
@@ -48,7 +49,7 @@ __all__ = [
     # 估值（L7）
     "calc_更新前價值",
     # 合約
-    "SCHEMA_VERSION", "build_result_json", "build_project_json",
+    "SCHEMA_VERSION", "CORE_VERSION", "build_result_json", "build_project_json",
     # 範本 + I/O
     "範本參數", "範本案件類型", "範本獎勵拆解", "範本樓層表", "範本模式",
     "解析上傳", "產生報告",

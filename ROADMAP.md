@@ -57,15 +57,20 @@ re-dcf-core/
 - [x] `calc_engine.py` 降為相容 shim（既有 import 不破）
 - [x] Project JSON Schema（`schemas/project_schema.json` + `core/contract.py`）
 - [x] 合約迴歸測試（`test_golden.py` 新增 JSON 合約驗證）
+- [x] L6 財務層真實案校準（竹蓮段/安民街，v4.8）
+- [x] Core 合約 v1.1：`warnings[]` 統一健檢、`owners[]` 規格定案、
+      `computed_at`/`core_version` 追溯（v4.9，回應 Urban-Renewal 對齊回覆）
 - [ ] `models/`：Domain Model 類別（project / building / owner）
 - [ ] `knowledge/`：法規知識庫骨架
 
-### P1 — Domain Model 補完（需安和段真實數據校準）
+### P1 — Domain Model 補完（需真實地主清冊資料）
+- [ ] **owners[] 輸入 UI**：Step 5/6 新增地主清冊 CSV 匯入（比照逐層表模式），
+      解鎖 Urban-Renewal 已實作的逐戶分回表／同意率視覺化／沙盤劇本橋接
 - [ ] `calc_更新前價值()` 補路寬 / 使用分區 / 建物型態係數
-- [ ] `calc_rights_exchange()` 權利變換：更新前價值 → 權值比例 → 分回
-- [ ] `calc_compensation()` 找補金
-- [ ] `calc_irr()` / `calc_npv()` / `calc_cashflow()`
-- [ ] L7 增值倍率合理區間防呆（>3× 黃燈 / >5× 紅燈）
+- [ ] `calc_rights_exchange()` 權利變換：更新前價值 → 權值比例 → 分回（owners[] 逐戶）
+- [ ] `calc_compensation()` 找補金（對應 owners[].equalization）
+- [ ] `calc_irr()` / `calc_npv()` / `calc_cashflow()`（竹蓮段有實際撥款進度可校準）
+- [x] L7 增值倍率合理區間防呆 → 已併入 v1.1 `VALUE_MULTIPLE_LOW` warning
 
 ### P2 — 法規 / 獎勵 / 財務引擎
 - [ ] `regulation/` 分縣市（taipei / newtaipei / taoyuan…），每條含條文/上限/來源/更新日期
@@ -79,12 +84,17 @@ re-dcf-core/
 
 ---
 
-## 與 Urban Dashboard 的關係
+## 與 Urban-Renewal Dashboard 的關係
 
 ```
-urban-dashboard/  →  Project JSON  →  re-dcf-core/  →  Result JSON  →  Dashboard
+Urban-Renewal/（純前端靜態站，evaluator.html）  ←  Project JSON  ←  RE-DCF Core
 ```
 
-- 兩者**不同 Repository**。Dashboard **不能自行計算**，只能呼叫 RE-DCF。
-- 結合分三階段：A 匯出/匯入 JSON（已具備合約）→ B Core 套件化 → C 雙向資料流。
-- ⚠️ 在 Dashboard 真正消費前，**不提早拆多 repo**（避免同步成本）；先在本 repo 內 import-ready。
+- 兩者**不同 Repository**，純 JSON 檔案交換（Urban-Renewal 無 build step / runtime，
+  不共用 npm/pip package）。Dashboard **不重算任何 Core 公式**，含 warnings 健檢判斷。
+- **狀態（2026-07）**：Phase 1 單向（Core 匯出 → Urban-Renewal 匯入顯示）**已雙方實作上線**。
+  Urban-Renewal 的 `evaluator.html`「🔗 對接 RE-DCF Core」區塊已可讀取 Tab⑤ 匯出的 JSON。
+- Phase 2（雙向：Urban-Renewal 權利人資料 → 回算 RE-DCF 權利變換）**待 V4 產品線穩定＋
+  owners[] 輸入 UI 就緒**才啟動，需 Core 提供計算端點（FastAPI，對應 P3）。
+- 契約版本紀律：schema 破壞性變更先知會 Urban-Renewal（bump `schema_version`）；
+  v1.0→v1.1 為純新增欄位，未知會即可上線。

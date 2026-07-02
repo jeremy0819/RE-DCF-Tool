@@ -45,8 +45,22 @@
     },
     "owners": {
       "type": "array",
-      "description": "地主清冊（vNext P1 權利變換用，目前可空）",
-      "items": { "type": "object" }
+      "description": "地主清冊（權利事實欄位；規格由 Urban-Renewal 消費端提出，2026-07 對齊）。空陣列＝總量可信、逐戶不可算，消費端已約定此語意。",
+      "items": {
+        "type": "object",
+        "required": ["owner_id", "land_share", "pre_building_area_sqm", "pre_value", "consent"],
+        "properties": {
+          "owner_id":              { "type": "string", "description": "匿名代號（如 W01），不放真實姓名" },
+          "land_share":            { "type": "number", "minimum": 0, "maximum": 1, "description": "土地持分（0–1）；分回與同意門檻計算的根" },
+          "pre_building_area_sqm": { "type": "number", "minimum": 0, "description": "更新前建物面積（0＝純空地持分）" },
+          "pre_value":             { "type": "number", "description": "更新前權利價值（萬元）；Σ 應 ≈ result.pre_renewal_value" },
+          "consent":               { "type": "string", "enum": ["agreed", "pending", "opposed"], "description": "同意狀態" },
+          "min_unit_eligible":     { "type": "boolean", "description": "是否達最小分配單元；未達則領補償金" },
+          "return_value":          { "type": "number", "description": "逐戶分回價值（萬元，回算後填入）" },
+          "equalization":          { "type": "number", "description": "找補金（萬元，正=補入/負=找出，回算後填入）" },
+          "selected_units":        { "type": "array", "description": "選配戶別（Phase 2 選屋用）", "items": { "type": "string" } }
+        }
+      }
     },
     "finance": {
       "type": "object",
@@ -61,10 +75,11 @@
     },
     "result": {
       "type": "object",
-      "description": "RE-DCF Core 計算結果（唯一可信數值來源）",
+      "description": "RE-DCF Core 計算結果（唯一可信數值來源，含健檢判斷）",
       "required": [
         "baseline_far", "allow_floor_area", "used_floor_area",
-        "remaining_floor_area", "saleable_area", "efficiency_ratio"
+        "remaining_floor_area", "saleable_area", "efficiency_ratio",
+        "warnings", "computed_at", "core_version"
       ],
       "properties": {
         "baseline_far":         { "type": "number", "description": "基準容積 FA（m²）" },
@@ -82,7 +97,23 @@
         "owner_return_ratio":   { "type": "number", "description": "地主分回比" },
         "return_rate":          { "type": "number", "description": "報酬率（利潤/總成本）" },
         "pre_renewal_value":    { "type": "number", "description": "更新前總值（萬元，L7）" },
-        "value_multiple":       { "type": "number", "description": "增值倍率（地主分回 / 更新前總值）" }
+        "value_multiple":       { "type": "number", "description": "增值倍率（地主分回 / 更新前總值）" },
+        "warnings": {
+          "type": "array",
+          "description": "Core 統一健檢判斷；消費端只讀不重判門檻，避免兩端邏輯分歧",
+          "items": {
+            "type": "object",
+            "required": ["code", "level", "message"],
+            "properties": {
+              "code":    { "type": "string", "description": "如 EFFICIENCY_OUT_OF_BAND / VOLUME_EXCEEDED / SHARED_COST_HIGH / SHARED_COST_LOW / VALUE_MULTIPLE_LOW / OWNERS_SHARE_MISMATCH / OWNERS_VALUE_MISMATCH" },
+              "level":   { "type": "string", "enum": ["info", "warn", "error"], "description": "info=提示 / warn=黃燈 / error=紅燈" },
+              "message": { "type": "string", "description": "人類可讀說明（中文）" },
+              "field":   { "type": "string", "description": "對應的 result 欄位名（可選）" }
+            }
+          }
+        },
+        "computed_at":  { "type": "string", "format": "date-time", "description": "本結果計算時間（ISO 8601, UTC）" },
+        "core_version": { "type": "string", "description": "計算此結果的 Core Engine 版本（core/_version.py）" }
       }
     }
   }

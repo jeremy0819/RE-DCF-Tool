@@ -1,17 +1,17 @@
 {
   "schema_version": "1.1",
   "project": {
-    "name": "中正段",
+    "name": "案例C",
     "renewal_type": "urban_renewal"
   },
   "land": {
-    "site_area_sqm": 983.0,
+    "site_area_sqm": 960.0,
     "plaza_area_sqm": 0.0,
     "far": 2.25,
-    "bonus_ratio": 0.88407,
+    "bonus_ratio": 0.86,
     "bonus_breakdown": {
       "更新基本": 0.5,
-      "防災加成": 0.38407
+      "防災加成": 0.36
     },
     "tdr_transfer_sqm": 0.0
   },
@@ -23,45 +23,45 @@
   },
   "owners": [],
   "finance": {
-    "residential_price": 130.0,
-    "shop_area": 66.0,
-    "shop_price": 182.0,
-    "parking_count": 49,
+    "residential_price": 136.0,
+    "shop_area": 60.0,
+    "shop_price": 170.0,
+    "parking_count": 48,
     "parking_price": 250.0,
     "construction_price": 24.0
   },
   "result": {
-    "baseline_far": 2211.75,
-    "allow_floor_area": 4167.09,
-    "used_floor_area": 4198.75,
-    "remaining_floor_area": -31.66,
-    "stair_exempt_cap": 625.06,
-    "balcony_exempt_area": 495.11,
-    "saleable_area": 2125.99,
-    "efficiency_ratio": 1.687,
-    "total_sales": 292061.0,
-    "shared_cost": 87535.0,
-    "shared_cost_ratio": 0.2997,
-    "owner_return_value": 204526.0,
-    "owner_return_ratio": 0.7003,
-    "return_rate": 2.3365,
+    "baseline_far": 2160.0,
+    "allow_floor_area": 4017.6,
+    "used_floor_area": 4049.52,
+    "remaining_floor_area": -31.92,
+    "stair_exempt_cap": 602.64,
+    "balcony_exempt_area": 488.6,
+    "saleable_area": 2054.85,
+    "efficiency_ratio": 1.691,
+    "total_sales": 293500.0,
+    "shared_cost": 87232.0,
+    "shared_cost_ratio": 0.2972,
+    "owner_return_value": 206268.0,
+    "owner_return_ratio": 0.7028,
+    "return_rate": 2.3646,
     "warnings": [
       {
         "code": "EFFICIENCY_OUT_OF_BAND",
         "level": "warn",
-        "message": "銷坪比 1.687 不在正常帶 1.58–1.68",
+        "message": "銷坪比 1.691 不在正常帶 1.58–1.68",
         "field": "efficiency_ratio"
       },
       {
         "code": "VOLUME_EXCEEDED",
         "level": "error",
-        "message": "容積超出允建 31.66 m²，需調整設計",
+        "message": "容積超出允建 31.92 m²，需調整設計",
         "field": "remaining_floor_area"
       },
       {
         "code": "SHARED_COST_LOW",
         "level": "info",
-        "message": "共負比 30.0% 低於合理區間下限 30%，建議覆核參數",
+        "message": "共負比 29.7% 低於合理區間下限 30%，建議覆核參數",
         "field": "shared_cost_ratio"
       }
     ],

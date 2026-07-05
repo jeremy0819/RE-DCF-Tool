@@ -28,7 +28,7 @@
   P1 待真實資料）。
 
 **測試**：`test_golden.py` 新增 owners 一致性自檢測試（故意偏離 10% 持分，驗證抓到
-`OWNERS_SHARE_MISMATCH`）與 `VOLUME_EXCEEDED` warning 斷言（中正段已知容積超出）。
+`OWNERS_SHARE_MISMATCH`）與 `VOLUME_EXCEEDED` warning 斷言（合約測試案已知容積超出）。
 
 **版本號 DRY 化**：app.py 散落 4 處的 `v4.x` 字串問題（見 v4.6 專案報告已知問題）尚未完全解決，
 本版僅統一改字串內容，未來再抽成單一常數。
@@ -45,11 +45,11 @@
 - 拆補/租金補償基準改為「權變戶數」（既有地主），非總銷售戶數。
 
 **資料（真實案）**
-- 新增竹蓮段（新竹危老在建，英奇+永盛合建）、安民街(安和段)（權變審議版）為 L6 校準基準。
+- 新增兩件真實案（危老在建合建案／都更權變審議案；案名與數字為私有校準紀錄）為 L6 校準基準。
 - `範本模式` / `財務覆寫`：各案實際費率與模式。
 
 **測試**：7 案 PASS。L6 校準結果——
-竹蓮 共負比 64.6%(實際64.8%)、報酬 54.9%(ROI 54%)；安民 共負 +0.2%、報酬 84%(實際81%)。
+兩案共負比／報酬率與實際值誤差均在 ±5% 內（校準明細私有，不進版控）。
 
 **UI**：Step 4 新增投報模式切換；營造基準自動採總樓地板，移除手填粗估。
 
@@ -68,9 +68,9 @@
 - `core/contract.py` + `schemas/project_schema.json`：對外 Project JSON 合約。
   內部 domain 中文、對外 key 英文（`allow_floor_area`…），跨 App 唯一資料格式。
 - `app.py` Tab ⑤ 新增「下載案件 JSON」+ 預覽。
-- `test_golden.py` 新增「JSON 合約」測試（中正段 pipeline → jsonschema 驗證）。
+- `test_golden.py` 新增「JSON 合約」測試（完整 pipeline → jsonschema 驗證）。
 
-**測試**：5 案全 PASS（安和 / 龜山 / 中正 / 中正投報 / JSON 合約）。
+**測試**：5 案全 PASS（三容積案 + L6 投報 + JSON 合約）。
 
 ---
 

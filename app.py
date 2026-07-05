@@ -18,7 +18,7 @@ v4.8 更新（L6 財務層重構）：
   1.【營造基準】改用「總樓地板面積(含地下室)」，修正舊「允建坪」低估營造約一半的踩坑。
   2.【三模式】全案管理／合建／買賣；土地成本、全案管理費、權變費依模式計入。
   3.【新科目】補代銷費、信託+公共基金；設計費率由假設 5% 修正為實際 ~1.4%。
-  4.【真實校準】以竹蓮段(危老在建)、安民街(權變審議)實際數據鎖 L6 黃金測試（±5%）。
+  4.【真實校準】以兩件真實案（私有校準紀錄，去識別化不進版控）鎖 L6 黃金測試（±5%）。
 
 v4.7 更新（vNext Sprint 1：Core 化）：
   1.【模組拆分】計算層搬入 core/（capacity/efficiency/finance/valuation）；
@@ -322,15 +322,15 @@ section[data-testid="stSidebar"] [data-testid="stExpander"] { border-color: #ECE
 
     # ── 初始化 ────────────────────────────────────────────────────────────────
     if "floors_df" not in st.session_state:
-        st.session_state.floors_df = 範本樓層表("中正段（防災都更）")
+        st.session_state.floors_df = 範本樓層表("案例C（防災都更）")
     if "params" not in st.session_state:
-        st.session_state.params = dict(範本參數["中正段（防災都更）"])
+        st.session_state.params = dict(範本參數["案例C（防災都更）"])
     if "案件類型" not in st.session_state:
-        st.session_state.案件類型 = 範本案件類型["中正段（防災都更）"]
+        st.session_state.案件類型 = 範本案件類型["案例C（防災都更）"]
     if "獎勵拆解" not in st.session_state:
-        st.session_state.獎勵拆解 = dict(範本獎勵拆解["中正段（防災都更）"])
+        st.session_state.獎勵拆解 = dict(範本獎勵拆解["案例C（防災都更）"])
     if "投報模式" not in st.session_state:
-        st.session_state.投報模式 = 範本模式["中正段（防災都更）"]
+        st.session_state.投報模式 = 範本模式["案例C（防災都更）"]
 
     # ── Sidebar ──────────────────────────────────────────────────────────────
     with st.sidebar:
@@ -501,7 +501,7 @@ border-radius:11px;padding:10px 14px 8px;margin-bottom:10px">
                 "土地成本（萬）", value=float(P.get("土融土地成本", 0.0)), step=1000.0,
                 help="全案管理（地主自持）填 0；合建/買賣填土地取得成本，計入共負 G 科目與土融利息")
             st.caption("💡 營造基準已自動採「總樓地板面積（含地下室）」= 逐層表加總，不需手填")
-            with st.expander("⚙️ 進階成本率（預設＝安和段送審值）"):
+            with st.expander("⚙️ 進階成本率（預設＝實案校準值）"):
                 cc1, cc2 = st.columns(2)
                 P["管理費率"] = cc1.number_input(
                     "全案管理費率（基數：總銷）",
@@ -1146,7 +1146,7 @@ B1F 防空避難室　▶ §117</div>
         _模式對應 = {"都更": "都更全案管理", "危老": "危老重建"}
         _模式預設 = _模式對應.get(案件類型, "都更全案管理")
         # 案件切換時重置比較模式（key 固定的 widget 不會自動跟著 index 參數更新，
-        # 需在渲染前直接改 session_state[key]，否則沿用上一個案件的選擇，見竹蓮/安民切換踩坑）
+        # 需在渲染前直接改 session_state[key]，否則沿用上一個案件的選擇，案件切換踩坑）
         if st.session_state.get("_共負模式_案件") != P.get("案件名稱"):
             st.session_state["共負模式"] = _模式預設
             st.session_state["_共負模式_案件"] = P.get("案件名稱")

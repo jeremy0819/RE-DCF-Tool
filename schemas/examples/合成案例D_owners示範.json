@@ -1,11 +1,11 @@
 {
   "schema_version": "1.1",
   "project": {
-    "name": "（合成範例）owners 示範",
+    "name": "案例D（owners 示範）",
     "renewal_type": "danger_building"
   },
   "land": {
-    "site_area_sqm": 1541.0,
+    "site_area_sqm": 1500.0,
     "plaza_area_sqm": 0.0,
     "far": 2.4,
     "bonus_ratio": 0.4,
@@ -14,7 +14,7 @@
       "規模": 0.08,
       "基本": 0.02
     },
-    "tdr_transfer_sqm": 1109.52
+    "tdr_transfer_sqm": 1080.0
   },
   "building": {
     "public_ratio": 0.34,
@@ -27,7 +27,7 @@
       "owner_id": "W01",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -35,7 +35,7 @@
       "owner_id": "W02",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -43,7 +43,7 @@
       "owner_id": "W03",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -51,7 +51,7 @@
       "owner_id": "W04",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -59,7 +59,7 @@
       "owner_id": "W05",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -67,7 +67,7 @@
       "owner_id": "W06",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -75,7 +75,7 @@
       "owner_id": "W07",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -83,7 +83,7 @@
       "owner_id": "W08",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -91,7 +91,7 @@
       "owner_id": "W09",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -99,7 +99,7 @@
       "owner_id": "W10",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -107,7 +107,7 @@
       "owner_id": "W11",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -115,7 +115,7 @@
       "owner_id": "W12",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -123,7 +123,7 @@
       "owner_id": "W13",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -131,7 +131,7 @@
       "owner_id": "W14",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -139,7 +139,7 @@
       "owner_id": "W15",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -147,7 +147,7 @@
       "owner_id": "W16",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -155,7 +155,7 @@
       "owner_id": "W17",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -163,7 +163,7 @@
       "owner_id": "W18",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -171,7 +171,7 @@
       "owner_id": "W19",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -179,7 +179,7 @@
       "owner_id": "W20",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -187,7 +187,7 @@
       "owner_id": "W21",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -195,7 +195,7 @@
       "owner_id": "W22",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -203,7 +203,7 @@
       "owner_id": "W23",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -211,7 +211,7 @@
       "owner_id": "W24",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -219,7 +219,7 @@
       "owner_id": "W25",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -227,7 +227,7 @@
       "owner_id": "W26",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -235,7 +235,7 @@
       "owner_id": "W27",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -243,7 +243,7 @@
       "owner_id": "W28",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -251,7 +251,7 @@
       "owner_id": "W29",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -259,7 +259,7 @@
       "owner_id": "W30",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -267,7 +267,7 @@
       "owner_id": "W31",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -275,7 +275,7 @@
       "owner_id": "W32",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -283,7 +283,7 @@
       "owner_id": "W33",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -291,7 +291,7 @@
       "owner_id": "W34",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "agreed",
       "min_unit_eligible": true
     },
@@ -299,7 +299,7 @@
       "owner_id": "W35",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "pending",
       "min_unit_eligible": true
     },
@@ -307,7 +307,7 @@
       "owner_id": "W36",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "pending",
       "min_unit_eligible": true
     },
@@ -315,7 +315,7 @@
       "owner_id": "W37",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "pending",
       "min_unit_eligible": true
     },
@@ -323,7 +323,7 @@
       "owner_id": "W38",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "pending",
       "min_unit_eligible": true
     },
@@ -331,7 +331,7 @@
       "owner_id": "W39",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "pending",
       "min_unit_eligible": true
     },
@@ -339,7 +339,7 @@
       "owner_id": "W40",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "pending",
       "min_unit_eligible": true
     },
@@ -347,7 +347,7 @@
       "owner_id": "W41",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "pending",
       "min_unit_eligible": true
     },
@@ -355,7 +355,7 @@
       "owner_id": "W42",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "pending",
       "min_unit_eligible": true
     },
@@ -363,7 +363,7 @@
       "owner_id": "W43",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "pending",
       "min_unit_eligible": true
     },
@@ -371,7 +371,7 @@
       "owner_id": "W44",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "pending",
       "min_unit_eligible": true
     },
@@ -379,7 +379,7 @@
       "owner_id": "W45",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "opposed",
       "min_unit_eligible": true
     },
@@ -387,7 +387,7 @@
       "owner_id": "W46",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "opposed",
       "min_unit_eligible": true
     },
@@ -395,7 +395,7 @@
       "owner_id": "W47",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "opposed",
       "min_unit_eligible": true
     },
@@ -403,53 +403,53 @@
       "owner_id": "W48",
       "land_share": 0.020833,
       "pre_building_area_sqm": 0.0,
-      "pre_value": 776.92,
+      "pre_value": 756.25,
       "consent": "opposed",
       "min_unit_eligible": true
     }
   ],
   "finance": {
-    "residential_price": 67.0,
-    "shop_area": 93.23,
-    "shop_price": 100.5,
-    "parking_count": 79,
+    "residential_price": 65.0,
+    "shop_area": 90.0,
+    "shop_price": 100.0,
+    "parking_count": 78,
     "parking_price": 230.0,
     "construction_price": 20.0
   },
   "result": {
-    "baseline_far": 3698.4,
-    "allow_floor_area": 6287.28,
-    "used_floor_area": 6324.98,
-    "remaining_floor_area": -37.7,
-    "stair_exempt_cap": 943.09,
-    "balcony_exempt_area": 696.67,
-    "saleable_area": 3232.97,
-    "efficiency_ratio": 1.7,
-    "total_sales": 237902.0,
-    "shared_cost": 153608.0,
-    "shared_cost_ratio": 0.6457,
-    "owner_return_value": 84294.0,
-    "owner_return_ratio": 0.3543,
-    "return_rate": 0.5488,
-    "pre_renewal_value": 37292.0,
-    "value_multiple": 2.26,
+    "baseline_far": 3600.0,
+    "allow_floor_area": 6120.0,
+    "used_floor_area": 6157.5,
+    "remaining_floor_area": -37.5,
+    "stair_exempt_cap": 918.0,
+    "balcony_exempt_area": 693.0,
+    "saleable_area": 3153.84,
+    "efficiency_ratio": 1.704,
+    "total_sales": 226089.0,
+    "shared_cost": 149230.0,
+    "shared_cost_ratio": 0.66,
+    "owner_return_value": 76860.0,
+    "owner_return_ratio": 0.34,
+    "return_rate": 0.515,
+    "pre_renewal_value": 36300.0,
+    "value_multiple": 2.12,
     "warnings": [
       {
         "code": "EFFICIENCY_OUT_OF_BAND",
         "level": "warn",
-        "message": "銷坪比 1.700 不在正常帶 1.58–1.68",
+        "message": "銷坪比 1.704 不在正常帶 1.58–1.68",
         "field": "efficiency_ratio"
       },
       {
         "code": "VOLUME_EXCEEDED",
         "level": "error",
-        "message": "容積超出允建 37.70 m²，需調整設計",
+        "message": "容積超出允建 37.50 m²，需調整設計",
         "field": "remaining_floor_area"
       },
       {
         "code": "SHARED_COST_HIGH",
         "level": "error",
-        "message": "共負比 64.6% 超過警示線 60%，地主接受度明顯降低",
+        "message": "共負比 66.0% 超過警示線 60%，地主接受度明顯降低",
         "field": "shared_cost_ratio"
       }
     ],

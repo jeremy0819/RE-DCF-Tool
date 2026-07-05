@@ -24,7 +24,7 @@ v1.1（2026-07，回應 Urban-Renewal 介面對齊回覆）新增：
 
 from datetime import datetime, timezone
 
-from law_db import COMMON_BURDEN_RANGES
+from core.law_db import COMMON_BURDEN_RANGES
 from core._version import CORE_VERSION
 
 SCHEMA_VERSION = "1.1"

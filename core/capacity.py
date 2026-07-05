@@ -11,7 +11,7 @@ Urban Renewal Core Engine ── 建築容積查核 + 容積獎勵驗核。
   - calc_容積查核()：逐層 §162 免計查核，回傳 FA/允建/超出/餘量
 """
 
-from law_db import BONUS_都更, BONUS_危老
+from core.law_db import BONUS_都更, BONUS_危老
 
 # ---------------------------------------------------------------------------
 # 全域常數（整個 core 引用此處，不各自定義）

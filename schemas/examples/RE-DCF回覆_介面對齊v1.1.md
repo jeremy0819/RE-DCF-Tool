@@ -118,9 +118,9 @@ min_unit_eligible / return_value / equalization / selected_units      ← 選填
 
 | 檔案 | 涵蓋情境 |
 |---|---|
-| `竹蓮段_危老合建.json` | 危老＋合建模式；EFFICIENCY_OUT_OF_BAND + VOLUME_EXCEEDED + SHARED_COST_HIGH |
-| `安和段_都更全案管理.json` | 都更＋全案管理；容積剛好打滿（VOLUME_EXCEEDED 邊界情況，容積餘量≈0 但為負） |
-| `中正段_都更防災_容積超出.json` | 都更＋防災；三個 warning 同時觸發，測多筆顯示 |
+| `合成案例D_危老合建.json` | 危老＋合建模式；EFFICIENCY_OUT_OF_BAND + VOLUME_EXCEEDED + SHARED_COST_HIGH |
+| `合成案例A_都更全案管理.json` | 都更＋全案管理；容積剛好打滿（VOLUME_EXCEEDED 邊界情況，容積餘量≈0 但為負） |
+| `合成案例C_防災都更_容積超出.json` | 都更＋防災；三個 warning 同時觸發，測多筆顯示 |
 | `合成範例_owners示範.json` | 含 48 戶合成 owners[]，Σ 自檢乾淨通過 |
 
 可直接指到 repo 裡這幾個檔案做壓測，不用再等我們手動傳檔。`generate_examples.py` 可重跑，之後 Core 公式有變、需要重新出範例時直接執行即可。

@@ -57,7 +57,7 @@ re-dcf-core/
 - [x] `calc_engine.py` 降為相容 shim（既有 import 不破）
 - [x] Project JSON Schema（`schemas/project_schema.json` + `core/contract.py`）
 - [x] 合約迴歸測試（`test_golden.py` 新增 JSON 合約驗證）
-- [x] L6 財務層真實案校準（竹蓮段/安民街，v4.8）
+- [x] L6 財務層真實案校準（兩件真實案，私有紀錄，v4.8）
 - [x] Core 合約 v1.1：`warnings[]` 統一健檢、`owners[]` 規格定案、
       `computed_at`/`core_version` 追溯（v4.9，回應 Urban-Renewal 對齊回覆）
 - [ ] `models/`：Domain Model 類別（project / building / owner）
@@ -69,7 +69,7 @@ re-dcf-core/
 - [ ] `calc_更新前價值()` 補路寬 / 使用分區 / 建物型態係數
 - [ ] `calc_rights_exchange()` 權利變換：更新前價值 → 權值比例 → 分回（owners[] 逐戶）
 - [ ] `calc_compensation()` 找補金（對應 owners[].equalization）
-- [ ] `calc_irr()` / `calc_npv()` / `calc_cashflow()`（竹蓮段有實際撥款進度可校準）
+- [ ] `calc_irr()` / `calc_npv()` / `calc_cashflow()`（在建實案有實際撥款進度可私下校準）
 - [x] L7 增值倍率合理區間防呆 → 已併入 v1.1 `VALUE_MULTIPLE_LOW` warning
 
 ### P2 — 法規 / 獎勵 / 財務引擎
@@ -99,7 +99,7 @@ re-dcf-core/
 | `calc_更新前價值()` 補強 | 加路寬 / 使用分區 / 建物型態係數，目前是基礎版 | 無 |
 | `calc_rights_exchange()` | 更新前價值 → 權值比例 → 分回，填 owners[].`return_value` | owners[] 輸入 UI |
 | `calc_compensation()` | 找補金，填 owners[].`equalization` | `calc_rights_exchange()` |
-| **黃金測試** | 用竹蓮/安民真實案校準逐戶分回（若無真清冊，先用合成資料鎖回歸，標記待真實驗證） | 待你提供真實清冊，否則沿用合成範例 |
+| **黃金測試** | 用真實案（私有）校準逐戶分回；版控內先用合成資料鎖回歸 | 待使用者提供真實清冊，否則沿用合成範例 |
 
 **卡點**：目前沒有任何一案的真實地主清冊（土地持分、逐戶更新前建物面積）。UI 和函式可以先用合成資料做完，但要「真的算對」需要你提供至少一案的真實清冊。
 
@@ -108,15 +108,15 @@ re-dcf-core/
 
 | 項目 | 說明 | 前置 |
 |---|---|---|
-| `calc_cashflow()` | 分期現金流（規劃→基礎→結構→裝修→交屋），竹蓮段 Excel 已有 `全案現金流量表`／`預估現金流量表(永盛/英奇)`／`請款紀錄` 三張表可校準 | 無，資料已在手 |
+| `calc_cashflow()` | 分期現金流（規劃→基礎→結構→裝修→交屋），在建實案 Excel 之現金流量表／請款紀錄可私下校準 | 無，資料已在手（私有） |
 | `calc_irr()` / `calc_npv()` | 建在 `calc_cashflow()` 的分期現金流之上 | `calc_cashflow()` |
 | Loan Engine | 建融/土融改分期攤還排程，取代目前 D 貸款利息的單期簡化算法 | `calc_cashflow()` |
 | Sensitivity 擴充 | 現有售價×營造雙軸熱力圖，擴充到 IRR/NPV 維度 | `calc_irr()`/`calc_npv()` |
 | `regulation/` 分縣市 | 拆 `law_db.py` → `regulation/{taipei,newtaipei,taoyuan,...}/`，每條規則附條文/上限/來源/更新日期 | 無，可與財務引擎並行 |
 | `knowledge/` 骨架 | 法規知識庫（都市更新/危老/估價/土地法/建築技術規則），供未來 AI 引用 | 無 |
-| Monte Carlo | 售價/成本常態分佈模擬，竹蓮段 Excel 已有雛形分頁可參考 | `calc_irr()` |
+| Monte Carlo | 售價/成本常態分佈模擬，在建實案 Excel 已有雛形分頁可參考 | `calc_irr()` |
 
-**卡點**：竹蓮段的三張現金流分頁我已讀過但還沒建模；`regulation/` 分縣市需要你確認除了目前默認值以外，還要建哪些縣市（目前只有一般性 §162／都更容獎／危老 §6，未分縣市差異）。
+**卡點**：在建實案的三張現金流分頁已讀過但還沒建模；`regulation/` 分縣市需要你確認除了目前默認值以外，還要建哪些縣市（目前只有一般性 §162／都更容獎／危老 §6，未分縣市差異）。
 
 ### v7 — 對外介面 + Urban-Renewal Phase 2
 > 對應 P3。目標：Core 從「這個 repo 裡的 package」變成「任何人都能呼叫的服務」。

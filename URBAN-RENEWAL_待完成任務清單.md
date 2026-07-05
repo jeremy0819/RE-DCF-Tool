@@ -48,14 +48,14 @@
 
 ### 3. 拿正式範例檔重新壓測，不要只測自己手刻的合成資料
 `schemas/examples/` 這次交付了 4 個檔案，**其中 3 個是無 owners、1 個是有 owners（48 戶）**，
-且**都內建至少 1 個 warning**（`竹蓮段_危老合建.json` 甚至同時觸發 3 個 warning，
+且**都內建至少 1 個 warning**（`合成案例D_危老合建.json` 甚至同時觸發 3 個 warning，
 可以測多筆 warnings 並列顯示）：
 
 | 檔案 | 用途 |
 |---|---|
-| `竹蓮段_危老合建.json` | EFFICIENCY_OUT_OF_BAND + VOLUME_EXCEEDED + SHARED_COST_HIGH 同時出現 |
-| `安和段_都更全案管理.json` | 容積剛好打滿的邊界情況（`remaining_floor_area` 極小負值） |
-| `中正段_都更防災_容積超出.json` | 另一組容積超出＋銷坪比異常組合 |
+| `合成案例D_危老合建.json` | EFFICIENCY_OUT_OF_BAND + VOLUME_EXCEEDED + SHARED_COST_HIGH 同時出現 |
+| `合成案例A_都更全案管理.json` | 容積剛好打滿的邊界情況（`remaining_floor_area` 極小負值） |
+| `合成案例C_防災都更_容積超出.json` | 另一組容積超出＋銷坪比異常組合 |
 | `合成範例_owners示範.json` | 48 戶 owners[]，Σ 一致性自檢**乾淨通過**（示範正常情況） |
 
 你們之前用自己寫的合成範例測試，跟我方實際產出的格式可能有欄位順序、四捨五入位數、

@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.1",
+  "project": {
+    "name": "案例A",
+    "renewal_type": "urban_renewal"
+  },
+  "land": {
+    "site_area_sqm": 1600.0,
+    "plaza_area_sqm": 0.0,
+    "far": 2.8,
+    "bonus_ratio": 0.5,
+    "bonus_breakdown": {
+      "更新基本": 0.5
+    },
+    "tdr_transfer_sqm": 896.0
+  },
+  "building": {
+    "public_ratio": 0.34,
+    "stair_hall_exempt_pct": 5,
+    "balcony_exempt_pct": 10,
+    "unit_count": 110
+  },
+  "owners": [],
+  "finance": {
+    "residential_price": 62.0,
+    "shop_area": 270.0,
+    "shop_price": 100.0,
+    "parking_count": 100,
+    "parking_price": 230.0,
+    "construction_price": 22.0
+  },
+  "result": {
+    "baseline_far": 4480.0,
+    "allow_floor_area": 7616.0,
+    "used_floor_area": 7616.2,
+    "remaining_floor_area": -0.2,
+    "stair_exempt_cap": 1142.4,
+    "balcony_exempt_area": 649.0,
+    "saleable_area": 3825.99,
+    "efficiency_ratio": 1.661,
+    "total_sales": 270471.0,
+    "shared_cost": 151252.0,
+    "shared_cost_ratio": 0.5592,
+    "owner_return_value": 119219.0,
+    "owner_return_ratio": 0.4408,
+    "return_rate": 0.7882,
+    "pre_renewal_value": 62920.0,
+    "value_multiple": 1.89,
+    "warnings": [
+      {
+        "code": "VOLUME_EXCEEDED",
+        "level": "error",
+        "message": "容積超出允建 0.20 m²，需調整設計",
+        "field": "remaining_floor_area"
+      },
+      {
+        "code": "SHARED_COST_HIGH",
+        "level": "warn",
+        "message": "共負比 55.9% 高於合理區間上限 50%",
+        "field": "shared_cost_ratio"
+      }
+    ],
+    "computed_at": "2026-07-01T00:00:00+00:00",
+    "core_version": "0.2.0"
+  }
+}

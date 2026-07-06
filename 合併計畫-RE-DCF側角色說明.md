@@ -100,7 +100,7 @@ git clone <本庫> && cd RE-DCF-Tool
 pip install -r requirements.txt          # Python 3.11
 pytest                                    # 全綠
 python min_example.py                     # 出 result JSON
-grep -rn "竹蓮|安和|安民|中正|龜山" --exclude-dir=.git .   # 零命中
+bash check_no_real_names.sh               # PASS（真實段名檢查，字串只存在腳本與乾淨度報告內）
 sha256sum schemas/project_schema.json     # 對照乾淨度報告之凍結 hash
 git tag -l v0.2.0-premerge                # 基準 tag 存在
 ```

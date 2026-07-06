@@ -1,4 +1,13 @@
-# 🏗️ RE-DCF-Tool — 都更/危老前期評估工具
+> # ⚠️ 本庫已封存（ARCHIVED · 2026-07）
+> 本 repo 已整併進 **Urban Renewal OS**（monorepo，容器庫＝BUILDER）。
+> 計算核心現位於新庫 `core/redcf/`、計算工具位於 `apps/streamlit/app.py`。
+> 本庫凍結為**唯讀**、不再更新；新開發、Issue、部署一律移至新庫。
+> 👉 新家：**https://github.com/jeremy0819/BUILDER**（Urban Renewal OS）
+> 遷移說明見新庫 `docs/architecture/MIGRATION_PLAN.md`、`docs/architecture/DEPLOYMENT_MIGRATION.md`。
+
+---
+
+# 🏗️ RE-DCF-Tool — 都更/危老前期評估工具（已封存）
 
 > 永盛開發建設內部工具。輸入土地與**逐層**建築參數，自動完成容積查核（建築技術規則 §162）、銷售坪效、開發評效，並偵測六大法規踩坑點。  
 > **圖說（面積表）為唯一真實依據**，工具逐層偵測免計超出並補計，不蓋過建築師圖說。
